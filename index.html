@@ -7,12 +7,11 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="KaraokeLive" />
+  <meta name="apple-mobile-web-app-title" content="KaraokêLive" />
   <link rel="manifest" href="manifest.json" />
-  <title>KaraokeLive - Fila Inteligente</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="apple-touch-icon" href="icon-192.svg" />
+  <title>KaraokêLive — Fila Inteligente</title>
   <style>
 /* ===== RESET & BASE ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -533,30 +532,46 @@ html, body {
   .btn-row { gap: 6px; }
   .btn-secondary { font-size: 12px; padding: 7px 10px; }
 }
-  </style>
+
+</style>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
 </head>
 <body>
 
+  <!-- NAV -->
   <nav class="demo-nav" id="navBar">
-    <button class="nav-btn active" onclick="showScreen('host')"><i class="ti ti-device-tv"></i> Organizador</button>
-    <button class="nav-btn" onclick="showScreen('join')"><i class="ti ti-qrcode"></i> Participante (Entrada)</button>
-    <button class="nav-btn" onclick="showScreen('queue')"><i class="ti ti-list-numbers"></i> Participante (Fila)</button>
+    <button class="nav-btn active" onclick="showScreen('host')">
+      <i class="ti ti-device-tv"></i> Organizador
+    </button>
+    <button class="nav-btn" onclick="showScreen('join')">
+      <i class="ti ti-qrcode"></i> Participante (Entrada)
+    </button>
+    <button class="nav-btn" onclick="showScreen('queue')">
+      <i class="ti ti-list-numbers"></i> Participante (Fila)
+    </button>
   </nav>
 
+  <!-- ===== HOST SCREEN ===== -->
   <div class="screen host-screen active" id="screen-host">
-    <div class="logo">&#127908; Karaoke<span>Live</span></div>
+    <div class="logo">🎤 Karaokê<span>Live</span></div>
+
     <div id="setup-section" class="host-card">
       <h2><i class="ti ti-confetti"></i> Nova Festa</h2>
       <div class="input-group">
         <label>Nome da Festa</label>
-        <input type="text" id="partyName" placeholder="Ex: Aniversario da Ana" value="Aniversario da Ana" />
+        <input type="text" id="partyName" placeholder="Ex: Aniversário da Ana" value="Aniversário da Ana 🎉" />
       </div>
       <div class="input-group">
-        <label>Local / Endereco (opcional)</label>
-        <input type="text" id="partyPlace" placeholder="Ex: Salao do Clube" value="Salao do Clube" />
+        <label>Local / Endereço (opcional)</label>
+        <input type="text" id="partyPlace" placeholder="Ex: Salão do Clube" value="Salão do Clube" />
       </div>
-      <button class="btn-primary" onclick="generateParty()"><i class="ti ti-qrcode"></i> Gerar QR Code da Festa</button>
+      <button class="btn-primary" onclick="generateParty()">
+        <i class="ti ti-qrcode"></i> Gerar QR Code da Festa
+      </button>
     </div>
+
     <div id="qr-section" class="qr-wrapper" style="display:none;">
       <h3><i class="ti ti-qrcode"></i> QR Code da Festa</h3>
       <canvas id="qrCanvas" width="200" height="200"></canvas>
@@ -565,10 +580,11 @@ html, body {
       <div class="btn-row">
         <button class="btn-secondary" onclick="copyLink()"><i class="ti ti-copy"></i> Copiar link</button>
         <button class="btn-secondary" onclick="simJoin()"><i class="ti ti-user-plus"></i> Simular entrada</button>
-        <button class="btn-secondary" onclick="advanceQueue()"><i class="ti ti-player-skip-forward"></i> Proximo</button>
+        <button class="btn-secondary" onclick="advanceQueue()"><i class="ti ti-player-skip-forward"></i> Próximo</button>
         <button class="btn-secondary btn-danger" onclick="resetParty()"><i class="ti ti-refresh"></i> Nova festa</button>
       </div>
     </div>
+
     <div id="monitor-section" class="live-monitor" style="display:none;">
       <h2>
         <span>Fila ao vivo</span>
@@ -576,20 +592,24 @@ html, body {
       </h2>
       <div class="legend">
         <div class="legend-item"><span class="color-dot teal"></span> Cantando</div>
-        <div class="legend-item"><span class="color-dot yellow"></span> Proximo</div>
+        <div class="legend-item"><span class="color-dot yellow"></span> Próximo</div>
         <div class="legend-item"><span class="color-dot gray"></span> Aguardando</div>
       </div>
       <div class="queue-mini" id="hostQueueList">
-        <div class="empty-queue"><i class="ti ti-music-off"></i><br>Nenhum participante ainda.<br>Compartilhe o QR Code!</div>
+        <div class="empty-queue">
+          <i class="ti ti-music-off"></i><br>
+          Nenhum participante ainda.<br>Compartilhe o QR Code!
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- ===== JOIN SCREEN ===== -->
   <div class="screen join-screen" id="screen-join">
     <div class="join-card">
-      <div class="mic-icon">&#127908;</div>
+      <div class="mic-icon">🎤</div>
       <div class="join-title">Hora de cantar!</div>
-      <div class="join-party-name" id="joinPartyLabel">Festa: Aniversario da Ana</div>
+      <div class="join-party-name" id="joinPartyLabel">Festa: Aniversário da Ana 🎉</div>
       <div class="divider"></div>
       <div class="join-form">
         <div class="input-group">
@@ -597,33 +617,38 @@ html, body {
           <input type="text" id="participantName" placeholder="Como te chamamos?" />
         </div>
         <div class="input-group">
-          <label>Musica escolhida</label>
-          <input type="text" id="participantSong" placeholder="Nome da musica e artista" />
+          <label>Música escolhida</label>
+          <input type="text" id="participantSong" placeholder="Nome da música e artista" />
         </div>
-        <button class="btn-primary" onclick="joinQueue()"><i class="ti ti-arrow-right"></i> Entrar na fila</button>
+        <button class="btn-primary" onclick="joinQueue()">
+          <i class="ti ti-arrow-right"></i> Entrar na fila
+        </button>
       </div>
-      <p class="join-hint">Voce podera acompanhar sua posicao em tempo real apos entrar.</p>
+      <p class="join-hint">Você poderá acompanhar sua posição em tempo real após entrar.</p>
     </div>
   </div>
 
+  <!-- ===== QUEUE SCREEN ===== -->
   <div class="screen queue-screen" id="screen-queue">
     <div class="queue-header">
-      <div class="logo">&#127908; KaraokeLive</div>
+      <div class="logo">🎤 KaraokêLive</div>
       <div class="party-badge" id="queuePartyBadge">Festa</div>
     </div>
-    <div class="my-turn-banner" id="myTurnBanner">&#127908; E A SUA VEZ! Vai la!</div>
-    <div class="next-banner" id="nextBanner">Voce e o proximo! Prepare-se!</div>
+    <div class="my-turn-banner" id="myTurnBanner">🎤 É A SUA VEZ! Vai lá! 🎉</div>
+    <div class="next-banner" id="nextBanner">⚡ Você é o próximo! Prepare-se!</div>
     <div class="queue-list" id="mainQueueList"></div>
     <div class="bottom-bar">
       <div class="my-position-info">
-        <span class="my-pos-label">Sua posicao</span>
-        <span class="my-pos-num" id="myPosDisplay">#-</span>
+        <span class="my-pos-label">Sua posição</span>
+        <span class="my-pos-num" id="myPosDisplay">#–</span>
       </div>
       <div class="bottom-details">
-        <div class="bottom-name" id="bottomName">-</div>
+        <div class="bottom-name" id="bottomName">–</div>
         <div class="wait-time" id="waitTimeDisplay">Aguardando...</div>
       </div>
-      <button class="btn-secondary" onclick="showScreen('host')"><i class="ti ti-home"></i></button>
+      <button class="btn-secondary" onclick="showScreen('host')">
+        <i class="ti ti-home"></i>
+      </button>
     </div>
   </div>
 
@@ -945,11 +970,15 @@ function renderQueue() {
 
 /* ─── Init ─── */
 showScreen('host');
-  </script>
+
+</script>
+
   <script>
-    if('serviceWorker' in navigator){
-      window.addEventListener('load', function(){
-        navigator.serviceWorker.register('sw.js');
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(r => console.log('SW registrado:', r.scope))
+          .catch(e => console.log('SW erro:', e));
       });
     }
   </script>
