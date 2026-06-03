@@ -1,0 +1,48 @@
+python3 << 'EOF'
+css = open('css/style.css').read()
+js = open('js/app.js').read()
+
+content = open('index.html').read() if __import__('os').path.getsize('index.html') > 100 else ''
+
+# Build completo do zero
+html = f"""<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0d0d1a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="KaraokêLive" />
+  <link rel="manifest" href="manifest.json" />
+  <title>KaraokêLive — Fila Inteligente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+{css}
+  </style>
+</head>
+<body>
+""" + open('/dev/stdin').read() if False else ""
+
+# Lê o index atual da pasta (que tem o HTML estrutural)
+import urllib.request
+src = urllib.request.urlopen('https://raw.githubusercontent.com/DegoSouza07/karaoke-live/main/index.html').read().decode()
+# Injeta css inline e js inline
+src = src.replace('<link rel="stylesheet" href="css/style.css" />', f'<style>\n{css}\n</style>')
+src = src.replace('<script src="js/app.js"></script>', f'<script>\n{js}\n</script>')
+# Adiciona PWA metas
+src = src.replace('<title>', '<meta name="theme-color" content="#0d0d1a" />\n  <meta name="mobile-web-app-capable" content="yes" />\n  <meta name="apple-mobile-web-app-capable" content="yes" />\n  <meta name="apple-mobile-web-app-title" content="KaraokêLive" />\n  <link rel="manifest" href="manifest.json" />\n  <title>')
+# SW
+src = src.replace('</body>', """  <script>
+    if('serviceWorker' in navigator){
+      window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));
+    }
+  </script>
+</body>""")
+
+open('index.html','w').write(src)
+print('OK! index.html gerado:', len(src), 'chars')
+EOF
