@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <rect width="192" height="192" rx="40" fill="#0d0d1a"/>
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff3c6e"/>
+      <stop offset="100%" stop-color="#ffb800"/>
+    </linearGradient>
+  </defs>
+  <!-- Mic body -->
+  <rect x="80" y="36" width="32" height="60" rx="16" fill="url(#g1)"/>
+  <!-- Mic stand arc -->
+  <path d="M52 100 Q52 140 96 140 Q140 140 140 100" fill="none" stroke="#00e5c4" stroke-width="8" stroke-linecap="round"/>
+  <!-- Mic stand pole -->
+  <line x1="96" y1="140" x2="96" y2="162" stroke="#00e5c4" stroke-width="8" stroke-linecap="round"/>
+  <!-- Mic stand base -->
+  <line x1="68" y1="162" x2="124" y2="162" stroke="#00e5c4" stroke-width="8" stroke-linecap="round"/>
+  <!-- Sound waves -->
+  <circle cx="96" cy="66" r="44" fill="none" stroke="rgba(255,184,0,0.15)" stroke-width="3"/>
+  <circle cx="96" cy="66" r="58" fill="none" stroke="rgba(255,60,110,0.10)" stroke-width="2"/>
+</svg>

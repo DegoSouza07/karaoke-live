@@ -1,11 +1,4 @@
-python3 << 'EOF'
-css = open('css/style.css').read()
-js = open('js/app.js').read()
-
-content = open('index.html').read() if __import__('os').path.getsize('index.html') > 100 else ''
-
-# Build completo do zero
-html = f"""<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -16,22 +9,10 @@ html = f"""<!DOCTYPE html>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="KaraokêLive" />
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#0d0d1a"/><link rel="manifest" href="manifest.json"/><title>KaraokêLive — Fila Inteligente</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <link rel="apple-touch-icon" href="icon-192.svg" />
+  <title>KaraokêLive — Fila Inteligente</title>
   <style>
-{css}
-  </style>
-</head>
-<body>
-""" + open('/dev/stdin').read() if False else ""
-
-# Lê o index atual da pasta (que tem o HTML estrutural)
-import urllib.request
-src = urllib.request.urlopen('https://raw.githubusercontent.com/DegoSouza07/karaoke-live/main/index.html').read().decode()
-# Injeta css inline e js inline
-src = src.replace('<style>/* ===== RESET & BASE ===== */
+/* ===== RESET & BASE ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -549,8 +530,129 @@ html, body {
   .logo { font-size: 26px; }
   .btn-row { gap: 6px; }
   .btn-secondary { font-size: 12px; padding: 7px 10px; }
-}</style>', f'<style>\n{css}\n</style>')
-src = src.replace('<script>/* ===== KaraokêLive — app.js ===== */
+}
+
+</style>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="demo-nav" id="navBar">
+    <button class="nav-btn active" onclick="showScreen('host')">
+      <i class="ti ti-device-tv"></i> Organizador
+    </button>
+    <button class="nav-btn" onclick="showScreen('join')">
+      <i class="ti ti-qrcode"></i> Participante (Entrada)
+    </button>
+    <button class="nav-btn" onclick="showScreen('queue')">
+      <i class="ti ti-list-numbers"></i> Participante (Fila)
+    </button>
+  </nav>
+
+  <!-- ===== HOST SCREEN ===== -->
+  <div class="screen host-screen active" id="screen-host">
+    <div class="logo">🎤 Karaokê<span>Live</span></div>
+
+    <div id="setup-section" class="host-card">
+      <h2><i class="ti ti-confetti"></i> Nova Festa</h2>
+      <div class="input-group">
+        <label>Nome da Festa</label>
+        <input type="text" id="partyName" placeholder="Ex: Aniversário da Ana" value="Aniversário da Ana 🎉" />
+      </div>
+      <div class="input-group">
+        <label>Local / Endereço (opcional)</label>
+        <input type="text" id="partyPlace" placeholder="Ex: Salão do Clube" value="Salão do Clube" />
+      </div>
+      <button class="btn-primary" onclick="generateParty()">
+        <i class="ti ti-qrcode"></i> Gerar QR Code da Festa
+      </button>
+    </div>
+
+    <div id="qr-section" class="qr-wrapper" style="display:none;">
+      <h3><i class="ti ti-qrcode"></i> QR Code da Festa</h3>
+      <canvas id="qrCanvas" width="200" height="200"></canvas>
+      <div class="party-code" id="partyCodeDisplay">----</div>
+      <div class="party-link" id="partyLinkDisplay"></div>
+      <div class="btn-row">
+        <button class="btn-secondary" onclick="copyLink()"><i class="ti ti-copy"></i> Copiar link</button>
+        <button class="btn-secondary" onclick="simJoin()"><i class="ti ti-user-plus"></i> Simular entrada</button>
+        <button class="btn-secondary" onclick="advanceQueue()"><i class="ti ti-player-skip-forward"></i> Próximo</button>
+        <button class="btn-secondary btn-danger" onclick="resetParty()"><i class="ti ti-refresh"></i> Nova festa</button>
+      </div>
+    </div>
+
+    <div id="monitor-section" class="live-monitor" style="display:none;">
+      <h2>
+        <span>Fila ao vivo</span>
+        <span><span class="pulse-dot"></span> <span id="queueCount">0</span> na fila</span>
+      </h2>
+      <div class="legend">
+        <div class="legend-item"><span class="color-dot teal"></span> Cantando</div>
+        <div class="legend-item"><span class="color-dot yellow"></span> Próximo</div>
+        <div class="legend-item"><span class="color-dot gray"></span> Aguardando</div>
+      </div>
+      <div class="queue-mini" id="hostQueueList">
+        <div class="empty-queue">
+          <i class="ti ti-music-off"></i><br>
+          Nenhum participante ainda.<br>Compartilhe o QR Code!
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== JOIN SCREEN ===== -->
+  <div class="screen join-screen" id="screen-join">
+    <div class="join-card">
+      <div class="mic-icon">🎤</div>
+      <div class="join-title">Hora de cantar!</div>
+      <div class="join-party-name" id="joinPartyLabel">Festa: Aniversário da Ana 🎉</div>
+      <div class="divider"></div>
+      <div class="join-form">
+        <div class="input-group">
+          <label>Seu nome</label>
+          <input type="text" id="participantName" placeholder="Como te chamamos?" />
+        </div>
+        <div class="input-group">
+          <label>Música escolhida</label>
+          <input type="text" id="participantSong" placeholder="Nome da música e artista" />
+        </div>
+        <button class="btn-primary" onclick="joinQueue()">
+          <i class="ti ti-arrow-right"></i> Entrar na fila
+        </button>
+      </div>
+      <p class="join-hint">Você poderá acompanhar sua posição em tempo real após entrar.</p>
+    </div>
+  </div>
+
+  <!-- ===== QUEUE SCREEN ===== -->
+  <div class="screen queue-screen" id="screen-queue">
+    <div class="queue-header">
+      <div class="logo">🎤 KaraokêLive</div>
+      <div class="party-badge" id="queuePartyBadge">Festa</div>
+    </div>
+    <div class="my-turn-banner" id="myTurnBanner">🎤 É A SUA VEZ! Vai lá! 🎉</div>
+    <div class="next-banner" id="nextBanner">⚡ Você é o próximo! Prepare-se!</div>
+    <div class="queue-list" id="mainQueueList"></div>
+    <div class="bottom-bar">
+      <div class="my-position-info">
+        <span class="my-pos-label">Sua posição</span>
+        <span class="my-pos-num" id="myPosDisplay">#–</span>
+      </div>
+      <div class="bottom-details">
+        <div class="bottom-name" id="bottomName">–</div>
+        <div class="wait-time" id="waitTimeDisplay">Aguardando...</div>
+      </div>
+      <button class="btn-secondary" onclick="showScreen('host')">
+        <i class="ti ti-home"></i>
+      </button>
+    </div>
+  </div>
+
+  <script>
+/* ===== KaraokêLive — app.js ===== */
 
 const COLORS = ['#ff3c6e','#ffb800','#00e5c4','#a78bfa','#fb923c','#34d399','#60a5fa','#f472b6'];
 
@@ -866,17 +968,18 @@ function renderQueue() {
 }
 
 /* ─── Init ─── */
-showScreen('host');</script>', f'<script>\n{js}\n</script>')
-# Adiciona PWA metas
-src = src.replace('<meta name="theme-color" content="#0d0d1a"/><link rel="manifest" href="manifest.json"/><title>', '<meta name="theme-color" content="#0d0d1a" />\n  <meta name="mobile-web-app-capable" content="yes" />\n  <meta name="apple-mobile-web-app-capable" content="yes" />\n  <meta name="apple-mobile-web-app-title" content="KaraokêLive" />\n  <link rel="manifest" href="manifest.json" />\n  <meta name="theme-color" content="#0d0d1a"/><link rel="manifest" href="manifest.json"/><title>')
-# SW
-src = src.replace('<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js")</script></body>', """  <script>
-    if('serviceWorker' in navigator){
-      window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));
+showScreen('host');
+
+</script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(r => console.log('SW registrado:', r.scope))
+          .catch(e => console.log('SW erro:', e));
+      });
     }
   </script>
-<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js")</script></body>""")
-
-open('index.html','w').write(src)
-print('OK! index.html gerado:', len(src), 'chars')
-EOF
+</body>
+</html>
