@@ -543,35 +543,7 @@ html, body {
     <button class="nav-btn" onclick="showScreen('queue')"><i class="ti ti-list-numbers"></i> Participante (Fila)</button>
   </nav>
 
-  
-  <div class="screen login-screen" id="screen-login">
-    <div class="login-card">
-      <div class="login-logo">Karaoke<span>Live</span></div>
-      <p class="login-subtitle">Area do Organizador</p>
-      <div class="login-form">
-        <div class="input-group">
-          <label>Usuario</label>
-          <div class="input-icon-wrap">
-            <i class="ti ti-user"></i>
-            <input type="text" id="loginUser" placeholder="seu usuario" onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()" />
-          </div>
-        </div>
-        <div class="input-group">
-          <label>Senha</label>
-          <div class="input-icon-wrap">
-            <i class="ti ti-lock"></i>
-            <input type="password" id="loginPass" placeholder="sua senha" onkeydown="if(event.key==='Enter')doLogin()" />
-            <button class="password-toggle" onclick="togglePassword()" type="button"><i class="ti ti-eye" id="toggleIcon"></i></button>
-          </div>
-        </div>
-        <div class="login-error" id="loginError"></div>
-        <button class="btn-primary" id="loginBtn" onclick="doLogin()"><i class="ti ti-lock-open"></i> Entrar</button>
-      </div>
-      <div class="login-footer">Acesso restrito ao organizador.<br>Participantes entram pelo QR Code.</div>
-    </div>
-  </div>
-
-  <div class="screen host-screen" id="screen-host">
+  <div class="screen host-screen active" id="screen-host">
     <div class="logo">&#127908; Karaoke<span>Live</span></div>
     <div id="setup-section" class="host-card">
       <h2><i class="ti ti-confetti"></i> Nova Festa</h2>
@@ -972,7 +944,13 @@ function renderQueue() {
 }
 
 /* ─── Init ─── */
-showScreen('host');
+if(checkAuth()){showScreen('host');}else{showScreen('login');}const USERS=[{user:'admin',pass:'karaoke123',name:'Administrador'},{user:'dj',pass:'festa2025',name:'DJ'},{user:'anfitriao',pass:'vamoscantar',name:'Anfitriao'}];
+let loggedUser=null;
+function checkAuth(){const s=sessionStorage.getItem('kl_auth');if(s){const u=USERS.find(x=>x.user===s);if(u){loggedUser=u;return true;}}return false;}
+function doLogin(){const user=document.getElementById('loginUser').value.trim().toLowerCase();const pass=document.getElementById('loginPass').value;const err=document.getElementById('loginError');const found=USERS.find(x=>x.user===user&&x.pass===pass);if(found){loggedUser=found;sessionStorage.setItem('kl_auth',found.user);err.classList.remove('show');if(checkAuth()){showScreen('host');}else{showScreen('login');}}else{err.textContent='Usuario ou senha incorretos.';err.classList.add('show');}}
+function doLogout(){loggedUser=null;sessionStorage.removeItem('kl_auth');showScreen('login');}
+function togglePassword(){const i=document.getElementById('loginPass');const ic=document.getElementById('toggleIcon');i.type=i.type==='password'?'text':'password';ic.className=i.type==='password'?'ti ti-eye':'ti ti-eye-off';}
+
   </script>
   <script>
     if('serviceWorker' in navigator){
