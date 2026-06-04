@@ -857,7 +857,6 @@ const state = {
 
 /* ─── Navigation ─── */
 function showScreen(s) {
-  if (!loggedUser && s !== 'login') { s = 'login'; }
   document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
   const target = document.getElementById('screen-' + s);
   if (target) { target.classList.add('active'); }
