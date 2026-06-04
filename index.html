@@ -3,14 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0d0d1a" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="KaraokêLive" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <link rel="apple-touch-icon" href="icon-192.svg" />
   <title>KaraokêLive — Fila Inteligente</title>
   <style>
 /* ===== RESET & BASE ===== */
@@ -533,6 +525,134 @@ html, body {
   .btn-secondary { font-size: 12px; padding: 7px 10px; }
 }
 
+/* ===== LOGIN SCREEN ===== */
+.login-screen {
+  min-height: calc(100vh - 0px);
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: var(--bg);
+}
+
+.login-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 36px 28px;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.login-logo {
+  font-family: var(--font-title);
+  font-size: 38px;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.login-logo span { -webkit-text-fill-color: var(--accent3); }
+
+.login-subtitle {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  margin-top: -12px;
+}
+
+.login-form { width: 100%; display: flex; flex-direction: column; gap: 4px; }
+
+.input-icon-wrap {
+  position: relative;
+}
+.input-icon-wrap i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 17px;
+  pointer-events: none;
+}
+.input-icon-wrap input {
+  padding-left: 38px !important;
+}
+
+.login-error {
+  background: rgba(255,60,110,0.12);
+  border: 1px solid rgba(255,60,110,0.25);
+  border-radius: 10px;
+  color: var(--accent);
+  font-size: 13px;
+  padding: 10px 14px;
+  text-align: center;
+  display: none;
+}
+.login-error.show { display: block; }
+
+.login-footer {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.btn-logout {
+  background: transparent;
+  border: 1px solid rgba(255,60,110,0.25);
+  border-radius: 8px;
+  color: var(--accent);
+  font-size: 12px;
+  padding: 5px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.2s;
+}
+.btn-logout:hover { background: rgba(255,60,110,0.08); }
+
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 12px 5px 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.user-avatar {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #c4005a);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  color: #fff;
+  font-weight: 600;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 17px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
 </style>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -553,8 +673,46 @@ html, body {
     </button>
   </nav>
 
+  
+  <!-- ===== LOGIN SCREEN ===== -->
+  <div class="screen login-screen active" id="screen-login">
+    <div class="login-card">
+      <div class="login-logo">🎤 Karaok<span>ê</span>Live</div>
+      <p class="login-subtitle">Área do Organizador</p>
+      <div class="login-form">
+        <div class="input-group">
+          <label>Usuário</label>
+          <div class="input-icon-wrap">
+            <i class="ti ti-user" aria-hidden="true"></i>
+            <input type="text" id="loginUser" placeholder="seu usuário"
+              onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()" />
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Senha</label>
+          <div class="input-icon-wrap">
+            <i class="ti ti-lock" aria-hidden="true"></i>
+            <input type="password" id="loginPass" placeholder="sua senha"
+              onkeydown="if(event.key==='Enter')doLogin()" />
+            <button class="password-toggle" onclick="togglePassword()" type="button" aria-label="Mostrar senha">
+              <i class="ti ti-eye" id="toggleIcon"></i>
+            </button>
+          </div>
+        </div>
+        <div class="login-error" id="loginError"></div>
+        <button class="btn-primary" id="loginBtn" onclick="doLogin()" style="margin-top:4px">
+          <i class="ti ti-lock-open"></i> Entrar
+        </button>
+      </div>
+      <div class="login-footer">
+        Acesso restrito ao organizador.<br>
+        Participantes entram pelo QR Code da festa.
+      </div>
+    </div>
+  </div>
+
   <!-- ===== HOST SCREEN ===== -->
-  <div class="screen host-screen active" id="screen-host">
+  <div class="screen host-screen" id="screen-host">
     <div class="logo">🎤 Karaokê<span>Live</span></div>
 
     <div id="setup-section" class="host-card">
@@ -682,12 +840,14 @@ const state = {
 
 /* ─── Navigation ─── */
 function showScreen(s) {
+  if (s === 'host' && !loggedUser) { s = 'login'; }
   document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
   document.getElementById('screen-' + s).classList.add('active');
   document.querySelectorAll('.nav-btn').forEach((b, i) => {
     b.classList.toggle('active', ['host','join','queue'][i] === s);
   });
   if (s === 'queue') renderQueue();
+  if (s === 'host') updateUserBadge();
 }
 
 /* ─── Host: generate party ─── */
@@ -969,18 +1129,100 @@ function renderQueue() {
 }
 
 /* ─── Init ─── */
-showScreen('host');
+if (checkAuth()) {
+  showScreen('host');
+} else {
+  showScreen('login');
+}
+
+
+/* ===== AUTH ===== */
+
+const USERS = [
+  { user: 'admin',    pass: 'karaoke123', name: 'Administrador' },
+  { user: 'dj',       pass: 'festa2025',  name: 'DJ' },
+  { user: 'anfitriao',pass: 'vamoscantar',name: 'Anfitrião' },
+];
+
+let loggedUser = null;
+
+function hashPass(p) {
+  let h = 0;
+  for (let i = 0; i < p.length; i++) h = (Math.imul(31, h) + p.charCodeAt(i)) | 0;
+  return h.toString(16);
+}
+
+function checkAuth() {
+  const saved = sessionStorage.getItem('kl_auth');
+  if (saved) {
+    const u = USERS.find(x => x.user === saved);
+    if (u) { loggedUser = u; return true; }
+  }
+  return false;
+}
+
+function doLogin() {
+  const user = document.getElementById('loginUser').value.trim().toLowerCase();
+  const pass = document.getElementById('loginPass').value;
+  const err  = document.getElementById('loginError');
+  const btn  = document.getElementById('loginBtn');
+
+  if (!user || !pass) {
+    err.textContent = 'Preencha usuário e senha.';
+    err.classList.add('show');
+    return;
+  }
+
+  btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Entrando...';
+  btn.disabled = true;
+
+  setTimeout(() => {
+    const found = USERS.find(x => x.user === user && x.pass === pass);
+    if (found) {
+      loggedUser = found;
+      sessionStorage.setItem('kl_auth', found.user);
+      err.classList.remove('show');
+      showScreen('host');
+      updateUserBadge();
+    } else {
+      err.textContent = 'Usuário ou senha incorretos.';
+      err.classList.add('show');
+      btn.innerHTML = '<i class="ti ti-lock-open"></i> Entrar';
+      btn.disabled = false;
+      document.getElementById('loginPass').value = '';
+      document.getElementById('loginPass').focus();
+    }
+  }, 600);
+}
+
+function doLogout() {
+  loggedUser = null;
+  sessionStorage.removeItem('kl_auth');
+  resetParty();
+  showScreen('login');
+}
+
+function updateUserBadge() {
+  const badge = document.getElementById('userBadge');
+  if (!badge || !loggedUser) return;
+  badge.innerHTML = `
+    <div class="user-avatar">${loggedUser.name[0]}</div>
+    <span>${loggedUser.name}</span>
+  `;
+}
+
+function togglePassword() {
+  const inp = document.getElementById('loginPass');
+  const ico = document.getElementById('toggleIcon');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    ico.className = 'ti ti-eye-off';
+  } else {
+    inp.type = 'password';
+    ico.className = 'ti ti-eye';
+  }
+}
 
 </script>
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-          .then(r => console.log('SW registrado:', r.scope))
-          .catch(e => console.log('SW erro:', e));
-      });
-    }
-  </script>
 </body>
 </html>
