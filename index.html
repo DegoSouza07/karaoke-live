@@ -694,43 +694,6 @@ html, body {
 
   
   <!-- ===== LOGIN SCREEN ===== -->
-  <div class="screen login-screen active" id="screen-login">
-    <div class="login-card">
-      <div class="login-logo">🎤 Karaok<span>ê</span>Live</div>
-      <p class="login-subtitle">Área do Organizador</p>
-      <div class="login-form">
-        <div class="input-group">
-          <label>Usuário</label>
-          <div class="input-icon-wrap">
-            <i class="ti ti-user" aria-hidden="true"></i>
-            <input type="text" id="loginUser" placeholder="seu usuário"
-              onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()" />
-          </div>
-        </div>
-        <div class="input-group">
-          <label>Senha</label>
-          <div class="input-icon-wrap">
-            <i class="ti ti-lock" aria-hidden="true"></i>
-            <input type="password" id="loginPass" placeholder="sua senha"
-              onkeydown="if(event.key==='Enter')doLogin()" />
-            <button class="password-toggle" onclick="togglePassword()" type="button" aria-label="Mostrar senha">
-              <i class="ti ti-eye" id="toggleIcon"></i>
-            </button>
-          </div>
-        </div>
-        <div class="login-error" id="loginError"></div>
-        <button class="btn-primary" id="loginBtn" onclick="doLogin()" style="margin-top:4px">
-          <i class="ti ti-lock-open"></i> Entrar
-        </button>
-      </div>
-      <div class="login-footer">
-        Acesso restrito ao organizador.<br>
-        Participantes entram pelo QR Code da festa.
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== HOST SCREEN ===== -->
   <div class="screen login-screen" id="screen-login">
     <div class="login-card">
 
