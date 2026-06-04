@@ -3,16 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0d0d1a" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="KaraokeLive" />
-  <link rel="manifest" href="manifest.json" />
-  <title>KaraokeLive - Fila Inteligente</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <title>KaraokêLive — Fila Inteligente</title>
   <style>
 /* ===== RESET & BASE ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -533,31 +524,273 @@ html, body {
   .btn-row { gap: 6px; }
   .btn-secondary { font-size: 12px; padding: 7px 10px; }
 }
-  </style>
+
+/* ===== LOGIN SCREEN ===== */
+.login-screen {
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: var(--bg);
+  flex-direction: column;
+}
+
+.login-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 36px 28px 28px;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: fadeUp 0.45s cubic-bezier(.34,1.4,.64,1) both;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(24px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.login-logo-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.login-logo-icon {
+  width: 80px; height: 80px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #ff3c6e, #c4005a);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px;
+  box-shadow: 0 8px 32px rgba(255,60,110,0.45);
+  animation: glow 3s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0%,100% { box-shadow: 0 8px 32px rgba(255,60,110,0.45); }
+  50%      { box-shadow: 0 8px 48px rgba(255,60,110,0.7); }
+}
+
+.login-brand {
+  font-family: var(--font-title);
+  font-size: 30px;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+}
+.login-brand span { -webkit-text-fill-color: var(--accent3); }
+
+.login-tagline {
+  font-size: 12px;
+  color: var(--muted2);
+  text-align: center;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: -8px;
+}
+
+.login-divider {
+  width: 100%;
+  height: 1px;
+  background: var(--border);
+}
+
+.login-form { width: 100%; }
+
+.input-icon-wrap {
+  position: relative;
+}
+.input-icon-wrap i {
+  position: absolute; left: 12px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted); font-size: 17px; pointer-events: none;
+}
+.input-icon-wrap input { padding-left: 40px !important; }
+
+.password-toggle {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none; color: var(--muted);
+  cursor: pointer; font-size: 17px; padding: 0;
+  display: flex; align-items: center;
+  transition: color 0.2s;
+}
+.password-toggle:hover { color: var(--text); }
+
+.login-error {
+  background: rgba(255,60,110,0.12);
+  border: 1px solid rgba(255,60,110,0.25);
+  border-radius: 10px;
+  color: var(--accent);
+  font-size: 13px;
+  padding: 10px 14px;
+  text-align: center;
+  display: none;
+  margin-bottom: 4px;
+  animation: fadeUp 0.2s ease both;
+}
+.login-error.show { display: block; }
+
+.login-footer {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.7;
+}
+
+.powered-by {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  width: 100%;
+}
+.powered-by span { font-size: 11px; color: var(--muted); }
+.powered-by img  { height: 18px; opacity: 0.55; filter: brightness(1.5); }
+
+/* Nav oculto no login */
+.demo-nav.locked .nav-btn { opacity: 0.3; pointer-events: none; cursor: not-allowed; }
+
+</style>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
 </head>
 <body>
 
-  <nav class="demo-nav" id="navBar">
-    <button class="nav-btn active" onclick="showScreen('host')"><i class="ti ti-device-tv"></i> Organizador</button>
-    <button class="nav-btn" onclick="showScreen('join')"><i class="ti ti-qrcode"></i> Participante (Entrada)</button>
-    <button class="nav-btn" onclick="showScreen('queue')"><i class="ti ti-list-numbers"></i> Participante (Fila)</button>
+  <!-- NAV -->
+  <nav class="demo-nav locked" id="navBar">
+    <button class="nav-btn active" onclick="showScreen('host')">
+      <i class="ti ti-device-tv"></i> Organizador
+    </button>
+    <button class="nav-btn" onclick="showScreen('join')">
+      <i class="ti ti-qrcode"></i> Participante (Entrada)
+    </button>
+    <button class="nav-btn" onclick="showScreen('queue')">
+      <i class="ti ti-list-numbers"></i> Participante (Fila)
+    </button>
   </nav>
 
-  <div class="screen login-screen" id="screen-login"><div class="login-card"><div style="font-family:Boogaloo,sans-serif;font-size:32px;color:#ff3c6e">KaraokeLive</div><p style="color:#7a78a0;font-size:13px">Area do Organizador</p><div style="width:100%"><div style="margin-bottom:12px"><label style="font-size:11px;color:#7a78a0;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px">Usuario</label><input id="loginUser" type="text" placeholder="seu usuario" onkeydown="if(event.key=='Enter')document.getElementById('loginPass').focus()" style="width:100%;background:#16162a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0eeff;font-size:15px;padding:10px 14px;outline:none;box-sizing:border-box"/></div><div style="margin-bottom:12px"><label style="font-size:11px;color:#7a78a0;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px">Senha</label><input id="loginPass" type="password" placeholder="sua senha" onkeydown="if(event.key=='Enter')doLogin()" style="width:100%;background:#16162a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0eeff;font-size:15px;padding:10px 14px;outline:none;box-sizing:border-box"/></div><div id="loginError" style="display:none;background:rgba(255,60,110,0.12);border:1px solid rgba(255,60,110,0.25);border-radius:10px;color:#ff3c6e;font-size:13px;padding:10px;text-align:center;margin-bottom:8px"></div><button onclick="doLogin()" style="width:100%;background:linear-gradient(135deg,#ff3c6e,#c4005a);border:none;border-radius:12px;color:#fff;font-family:Boogaloo,sans-serif;font-size:19px;padding:12px;cursor:pointer">Entrar</button></div></div></div>
+  
+  <!-- ===== LOGIN SCREEN ===== -->
+  <div class="screen login-screen active" id="screen-login">
+    <div class="login-card">
+      <div class="login-logo">🎤 Karaok<span>ê</span>Live</div>
+      <p class="login-subtitle">Área do Organizador</p>
+      <div class="login-form">
+        <div class="input-group">
+          <label>Usuário</label>
+          <div class="input-icon-wrap">
+            <i class="ti ti-user" aria-hidden="true"></i>
+            <input type="text" id="loginUser" placeholder="seu usuário"
+              onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()" />
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Senha</label>
+          <div class="input-icon-wrap">
+            <i class="ti ti-lock" aria-hidden="true"></i>
+            <input type="password" id="loginPass" placeholder="sua senha"
+              onkeydown="if(event.key==='Enter')doLogin()" />
+            <button class="password-toggle" onclick="togglePassword()" type="button" aria-label="Mostrar senha">
+              <i class="ti ti-eye" id="toggleIcon"></i>
+            </button>
+          </div>
+        </div>
+        <div class="login-error" id="loginError"></div>
+        <button class="btn-primary" id="loginBtn" onclick="doLogin()" style="margin-top:4px">
+          <i class="ti ti-lock-open"></i> Entrar
+        </button>
+      </div>
+      <div class="login-footer">
+        Acesso restrito ao organizador.<br>
+        Participantes entram pelo QR Code da festa.
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== HOST SCREEN ===== -->
+  <div class="screen login-screen" id="screen-login">
+    <div class="login-card">
+
+      <div class="login-logo-wrap">
+        <div class="login-logo-icon">🎤</div>
+        <div class="login-brand">Karaok<span>ê</span>Live</div>
+        <p class="login-tagline">Fila Inteligente</p>
+      </div>
+
+      <div class="login-divider"></div>
+
+      <div class="login-form">
+        <div class="input-group">
+          <label>Usuário</label>
+          <div class="input-icon-wrap">
+            <i class="ti ti-user"></i>
+            <input type="text" id="loginUser" placeholder="seu usuário"
+              onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()" />
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Senha</label>
+          <div class="input-icon-wrap">
+            <i class="ti ti-lock"></i>
+            <input type="password" id="loginPass" placeholder="sua senha"
+              onkeydown="if(event.key==='Enter')doLogin()" />
+            <button class="password-toggle" onclick="togglePassword()" type="button" aria-label="Mostrar senha">
+              <i class="ti ti-eye" id="toggleIcon"></i>
+            </button>
+          </div>
+        </div>
+        <div class="login-error" id="loginError"></div>
+        <button class="btn-primary" id="loginBtn" onclick="doLogin()">
+          <i class="ti ti-lock-open"></i> Entrar
+        </button>
+      </div>
+
+      <div class="login-footer">
+        Acesso restrito ao organizador.<br>
+        Participantes entram pelo QR Code da festa.
+      </div>
+
+      <div class="powered-by">
+        <span>Desenvolvido por</span>
+        <span style="font-size:12px;font-weight:600;color:var(--accent3)">Byte</span>
+      </div>
+
+    </div>
+  </div>
+
   <div class="screen host-screen" id="screen-host">
-    <div class="logo">&#127908; Karaoke<span>Live</span></div>
+    <div class="logo">🎤 Karaokê<span>Live</span></div>
+
     <div id="setup-section" class="host-card">
       <h2><i class="ti ti-confetti"></i> Nova Festa</h2>
       <div class="input-group">
         <label>Nome da Festa</label>
-        <input type="text" id="partyName" placeholder="Ex: Aniversario da Ana" value="Aniversario da Ana" />
+        <input type="text" id="partyName" placeholder="Ex: Aniversário da Ana" value="Aniversário da Ana 🎉" />
       </div>
       <div class="input-group">
-        <label>Local / Endereco (opcional)</label>
-        <input type="text" id="partyPlace" placeholder="Ex: Salao do Clube" value="Salao do Clube" />
+        <label>Local / Endereço (opcional)</label>
+        <input type="text" id="partyPlace" placeholder="Ex: Salão do Clube" value="Salão do Clube" />
       </div>
-      <button class="btn-primary" onclick="generateParty()"><i class="ti ti-qrcode"></i> Gerar QR Code da Festa</button>
+      <button class="btn-primary" onclick="generateParty()">
+        <i class="ti ti-qrcode"></i> Gerar QR Code da Festa
+      </button>
     </div>
+
     <div id="qr-section" class="qr-wrapper" style="display:none;">
       <h3><i class="ti ti-qrcode"></i> QR Code da Festa</h3>
       <canvas id="qrCanvas" width="200" height="200"></canvas>
@@ -566,10 +799,11 @@ html, body {
       <div class="btn-row">
         <button class="btn-secondary" onclick="copyLink()"><i class="ti ti-copy"></i> Copiar link</button>
         <button class="btn-secondary" onclick="simJoin()"><i class="ti ti-user-plus"></i> Simular entrada</button>
-        <button class="btn-secondary" onclick="advanceQueue()"><i class="ti ti-player-skip-forward"></i> Proximo</button>
+        <button class="btn-secondary" onclick="advanceQueue()"><i class="ti ti-player-skip-forward"></i> Próximo</button>
         <button class="btn-secondary btn-danger" onclick="resetParty()"><i class="ti ti-refresh"></i> Nova festa</button>
       </div>
     </div>
+
     <div id="monitor-section" class="live-monitor" style="display:none;">
       <h2>
         <span>Fila ao vivo</span>
@@ -577,20 +811,24 @@ html, body {
       </h2>
       <div class="legend">
         <div class="legend-item"><span class="color-dot teal"></span> Cantando</div>
-        <div class="legend-item"><span class="color-dot yellow"></span> Proximo</div>
+        <div class="legend-item"><span class="color-dot yellow"></span> Próximo</div>
         <div class="legend-item"><span class="color-dot gray"></span> Aguardando</div>
       </div>
       <div class="queue-mini" id="hostQueueList">
-        <div class="empty-queue"><i class="ti ti-music-off"></i><br>Nenhum participante ainda.<br>Compartilhe o QR Code!</div>
+        <div class="empty-queue">
+          <i class="ti ti-music-off"></i><br>
+          Nenhum participante ainda.<br>Compartilhe o QR Code!
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- ===== JOIN SCREEN ===== -->
   <div class="screen join-screen" id="screen-join">
     <div class="join-card">
-      <div class="mic-icon">&#127908;</div>
+      <div class="mic-icon">🎤</div>
       <div class="join-title">Hora de cantar!</div>
-      <div class="join-party-name" id="joinPartyLabel">Festa: Aniversario da Ana</div>
+      <div class="join-party-name" id="joinPartyLabel">Festa: Aniversário da Ana 🎉</div>
       <div class="divider"></div>
       <div class="join-form">
         <div class="input-group">
@@ -598,33 +836,38 @@ html, body {
           <input type="text" id="participantName" placeholder="Como te chamamos?" />
         </div>
         <div class="input-group">
-          <label>Musica escolhida</label>
-          <input type="text" id="participantSong" placeholder="Nome da musica e artista" />
+          <label>Música escolhida</label>
+          <input type="text" id="participantSong" placeholder="Nome da música e artista" />
         </div>
-        <button class="btn-primary" onclick="joinQueue()"><i class="ti ti-arrow-right"></i> Entrar na fila</button>
+        <button class="btn-primary" onclick="joinQueue()">
+          <i class="ti ti-arrow-right"></i> Entrar na fila
+        </button>
       </div>
-      <p class="join-hint">Voce podera acompanhar sua posicao em tempo real apos entrar.</p>
+      <p class="join-hint">Você poderá acompanhar sua posição em tempo real após entrar.</p>
     </div>
   </div>
 
+  <!-- ===== QUEUE SCREEN ===== -->
   <div class="screen queue-screen" id="screen-queue">
     <div class="queue-header">
-      <div class="logo">&#127908; KaraokeLive</div>
+      <div class="logo">🎤 KaraokêLive</div>
       <div class="party-badge" id="queuePartyBadge">Festa</div>
     </div>
-    <div class="my-turn-banner" id="myTurnBanner">&#127908; E A SUA VEZ! Vai la!</div>
-    <div class="next-banner" id="nextBanner">Voce e o proximo! Prepare-se!</div>
+    <div class="my-turn-banner" id="myTurnBanner">🎤 É A SUA VEZ! Vai lá! 🎉</div>
+    <div class="next-banner" id="nextBanner">⚡ Você é o próximo! Prepare-se!</div>
     <div class="queue-list" id="mainQueueList"></div>
     <div class="bottom-bar">
       <div class="my-position-info">
-        <span class="my-pos-label">Sua posicao</span>
-        <span class="my-pos-num" id="myPosDisplay">#-</span>
+        <span class="my-pos-label">Sua posição</span>
+        <span class="my-pos-num" id="myPosDisplay">#–</span>
       </div>
       <div class="bottom-details">
-        <div class="bottom-name" id="bottomName">-</div>
+        <div class="bottom-name" id="bottomName">–</div>
         <div class="wait-time" id="waitTimeDisplay">Aguardando...</div>
       </div>
-      <button class="btn-secondary" onclick="showScreen('host')"><i class="ti ti-home"></i></button>
+      <button class="btn-secondary" onclick="showScreen('host')">
+        <i class="ti ti-home"></i>
+      </button>
     </div>
   </div>
 
@@ -658,12 +901,17 @@ const state = {
 
 /* ─── Navigation ─── */
 function showScreen(s) {
+  if (!loggedUser && s !== 'login') { s = 'login'; }
   document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-  document.getElementById('screen-' + s).classList.add('active');
+  const target = document.getElementById('screen-' + s);
+  if (target) { target.classList.add('active'); }
+  const nav = document.getElementById('navBar');
+  if (nav) { nav.classList.toggle('locked', !loggedUser); }
   document.querySelectorAll('.nav-btn').forEach((b, i) => {
     b.classList.toggle('active', ['host','join','queue'][i] === s);
   });
   if (s === 'queue') renderQueue();
+  if (s === 'host') updateUserBadge();
 }
 
 /* ─── Host: generate party ─── */
@@ -945,20 +1193,100 @@ function renderQueue() {
 }
 
 /* ─── Init ─── */
-if(checkAuth()){showScreen('host');}else{showScreen('login');}const USERS=[{user:'admin',pass:'karaoke123',name:'Administrador'},{user:'dj',pass:'festa2025',name:'DJ'},{user:'anfitriao',pass:'vamoscantar',name:'Anfitriao'}];
-let loggedUser=null;
-function checkAuth(){const s=sessionStorage.getItem('kl_auth');if(s){const u=USERS.find(x=>x.user===s);if(u){loggedUser=u;return true;}}return false;}
-function doLogin(){const user=document.getElementById('loginUser').value.trim().toLowerCase();const pass=document.getElementById('loginPass').value;const err=document.getElementById('loginError');const found=USERS.find(x=>x.user===user&&x.pass===pass);if(found){loggedUser=found;sessionStorage.setItem('kl_auth',found.user);err.classList.remove('show');if(checkAuth()){showScreen('host');}else{showScreen('login');}}else{err.textContent='Usuario ou senha incorretos.';err.classList.add('show');}}
-function doLogout(){loggedUser=null;sessionStorage.removeItem('kl_auth');showScreen('login');}
-function togglePassword(){const i=document.getElementById('loginPass');const ic=document.getElementById('toggleIcon');i.type=i.type==='password'?'text':'password';ic.className=i.type==='password'?'ti ti-eye':'ti ti-eye-off';}
+if (checkAuth()) {
+  showScreen('host');
+} else {
+  showScreen('login');
+}
 
-  </script>
-  <script>
-    if('serviceWorker' in navigator){
-      window.addEventListener('load', function(){
-        navigator.serviceWorker.register('sw.js');
-      });
+
+/* ===== AUTH ===== */
+
+const USERS = [
+  { user: 'admin',    pass: 'karaoke123', name: 'Administrador' },
+  { user: 'dj',       pass: 'festa2025',  name: 'DJ' },
+  { user: 'anfitriao',pass: 'vamoscantar',name: 'Anfitrião' },
+];
+
+let loggedUser = null;
+
+function hashPass(p) {
+  let h = 0;
+  for (let i = 0; i < p.length; i++) h = (Math.imul(31, h) + p.charCodeAt(i)) | 0;
+  return h.toString(16);
+}
+
+function checkAuth() {
+  const saved = sessionStorage.getItem('kl_auth');
+  if (saved) {
+    const u = USERS.find(x => x.user === saved);
+    if (u) { loggedUser = u; return true; }
+  }
+  return false;
+}
+
+function doLogin() {
+  const user = document.getElementById('loginUser').value.trim().toLowerCase();
+  const pass = document.getElementById('loginPass').value;
+  const err  = document.getElementById('loginError');
+  const btn  = document.getElementById('loginBtn');
+
+  if (!user || !pass) {
+    err.textContent = 'Preencha usuário e senha.';
+    err.classList.add('show');
+    return;
+  }
+
+  btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Entrando...';
+  btn.disabled = true;
+
+  setTimeout(() => {
+    const found = USERS.find(x => x.user === user && x.pass === pass);
+    if (found) {
+      loggedUser = found;
+      sessionStorage.setItem('kl_auth', found.user);
+      err.classList.remove('show');
+      showScreen('host');
+      updateUserBadge();
+    } else {
+      err.textContent = 'Usuário ou senha incorretos.';
+      err.classList.add('show');
+      btn.innerHTML = '<i class="ti ti-lock-open"></i> Entrar';
+      btn.disabled = false;
+      document.getElementById('loginPass').value = '';
+      document.getElementById('loginPass').focus();
     }
-  </script>
+  }, 600);
+}
+
+function doLogout() {
+  loggedUser = null;
+  sessionStorage.removeItem('kl_auth');
+  resetParty();
+  showScreen('login');
+}
+
+function updateUserBadge() {
+  const badge = document.getElementById('userBadge');
+  if (!badge || !loggedUser) return;
+  badge.innerHTML = `
+    <div class="user-avatar">${loggedUser.name[0]}</div>
+    <span>${loggedUser.name}</span>
+  `;
+}
+
+function togglePassword() {
+  const inp = document.getElementById('loginPass');
+  const ico = document.getElementById('toggleIcon');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    ico.className = 'ti ti-eye-off';
+  } else {
+    inp.type = 'password';
+    ico.className = 'ti ti-eye';
+  }
+}
+
+</script>
 </body>
 </html>
