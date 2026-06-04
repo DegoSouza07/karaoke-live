@@ -314,4 +314,9 @@ function renderQueue() {
 }
 
 /* ─── Init ─── */
-showScreen('host');
+if(checkAuth()){showScreen('host');}else{showScreen('login');}const USERS=[{user:'admin',pass:'karaoke123',name:'Administrador'},{user:'dj',pass:'festa2025',name:'DJ'},{user:'anfitriao',pass:'vamoscantar',name:'Anfitriao'}];
+let loggedUser=null;
+function checkAuth(){const s=sessionStorage.getItem('kl_auth');if(s){const u=USERS.find(x=>x.user===s);if(u){loggedUser=u;return true;}}return false;}
+function doLogin(){const user=document.getElementById('loginUser').value.trim().toLowerCase();const pass=document.getElementById('loginPass').value;const err=document.getElementById('loginError');const found=USERS.find(x=>x.user===user&&x.pass===pass);if(found){loggedUser=found;sessionStorage.setItem('kl_auth',found.user);err.classList.remove('show');if(checkAuth()){showScreen('host');}else{showScreen('login');}}else{err.textContent='Usuario ou senha incorretos.';err.classList.add('show');}}
+function doLogout(){loggedUser=null;sessionStorage.removeItem('kl_auth');showScreen('login');}
+function togglePassword(){const i=document.getElementById('loginPass');const ic=document.getElementById('toggleIcon');i.type=i.type==='password'?'text':'password';ic.className=i.type==='password'?'ti ti-eye':'ti ti-eye-off';}
