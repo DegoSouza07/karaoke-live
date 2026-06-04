@@ -1183,48 +1183,29 @@ function checkAuth() {
 }
 
 function doLogin() {
-  const user = document.getElementById('loginUser').value.trim().toLowerCase();
-  const pass = document.getElementById('loginPass').value;
-  const err  = document.getElementById('loginError');
-  const btn  = document.getElementById('loginBtn');
-
-  if (!user || !pass) {
-    err.textContent = 'Preencha usuário e senha.';
-    err.classList.add('show');
-    return;
+  var user = (document.getElementById('loginUser').value || '').trim().toLowerCase();
+  var pass = document.getElementById('loginPass').value || '';
+  var err  = document.getElementById('loginError');
+  var btn  = document.getElementById('loginBtn');
+  var found = null;
+  for (var i=0; i<USERS.length; i++) { if (USERS[i].user===user && USERS[i].pass===pass) { found=USERS[i]; break; } }
+  if (found) {
+    loggedUser = found;
+    sessionStorage.setItem('kl_auth', found.user);
+    err.style.display = 'none';
+    var nav = document.getElementById('navBar');
+    if (nav) nav.classList.remove('locked');
+    document.querySelectorAll('.screen').forEach(function(e){e.classList.remove('active');});
+    var host = document.getElementById('screen-host');
+    if (host) host.classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(function(b,i){b.classList.toggle('active',i===0);});
+    updateUserBadge();
+  } else {
+    err.textContent = 'Usuario ou senha incorretos.';
+    err.style.display = 'block';
+    document.getElementById('loginPass').value = '';
+    document.getElementById('loginPass').focus();
   }
-
-  btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Entrando...';
-  btn.disabled = true;
-
-  setTimeout(() => {
-    const found = USERS.find(x => x.user === user && x.pass === pass);
-    if (found) {
-      loggedUser = found;
-      sessionStorage.setItem('kl_auth', found.user);
-      var nav = document.getElementById('navBar');
-      if (nav) nav.classList.remove('locked');
-      err.style.display = 'none';
-      document.querySelectorAll('.screen').forEach(function(e){e.classList.remove('active');});
-      var host = document.getElementById('screen-host');
-      if (host) host.classList.add('active');
-      document.querySelectorAll('.nav-btn').forEach(function(b,i){b.classList.toggle('active',i===0);});
-      btn.innerHTML = '<i class="ti ti-lock-open"></i> Entrar';
-      btn.disabled = false;
-      updateUserBadge();
-    } else {
-      err.textContent = '❌ Usuário ou senha incorretos. Tente novamente.';
-      err.style.display = 'block';
-      err.classList.add('show');
-      btn.innerHTML = '<i class="ti ti-lock-open"></i> Entrar';
-      btn.disabled = false;
-      document.getElementById('loginPass').value = '';
-      document.getElementById('loginPass').focus();
-      // Shake effect
-      const card = document.querySelector('.login-card');
-      if (card) { card.style.animation = 'shake 0.4s ease'; setTimeout(() => card.style.animation = 'fadeUp 0.45s cubic-bezier(.34,1.4,.64,1) both', 400); }
-    }
-  }, 600);
 }
 
 function doLogout() {
