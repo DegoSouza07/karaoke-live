@@ -1202,18 +1202,15 @@ function doLogin() {
     if (found) {
       loggedUser = found;
       sessionStorage.setItem('kl_auth', found.user);
-      // Unlock nav
-      const nav = document.getElementById('navBar');
+      var nav = document.getElementById('navBar');
       if (nav) nav.classList.remove('locked');
-      // Hide error
       err.style.display = 'none';
-      err.classList.remove('show');
-      // Show host screen directly
-      document.querySelectorAll('.screen').forEach(e => { e.classList.remove('active'); e.style.display = ''; });
-      const host = document.getElementById('screen-host');
+      document.querySelectorAll('.screen').forEach(function(e){e.classList.remove('active');});
+      var host = document.getElementById('screen-host');
       if (host) host.classList.add('active');
-      // Update nav active state
-      document.querySelectorAll('.nav-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+      document.querySelectorAll('.nav-btn').forEach(function(b,i){b.classList.toggle('active',i===0);});
+      btn.innerHTML = '<i class="ti ti-lock-open"></i> Entrar';
+      btn.disabled = false;
       updateUserBadge();
     } else {
       err.textContent = '❌ Usuário ou senha incorretos. Tente novamente.';
@@ -1247,8 +1244,9 @@ function updateUserBadge() {
 }
 
 function togglePassword() {
-  const inp = document.getElementById('loginPass');
-  const ico = document.getElementById('toggleIcon');
+  var inp = document.getElementById('loginPass');
+  var ico = document.getElementById('toggleIcon');
+  if (!inp || !ico) return;
   if (inp.type === 'password') {
     inp.type = 'text';
     ico.className = 'ti ti-eye-off';
