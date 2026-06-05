@@ -1,35 +1,7 @@
-css = open('css/style.css').read()
-js = open('js/app.js').read()
 html = open('index.html').read()
-login_html = """
-  <div class="screen login-screen" id="screen-login">
-    <div class="login-card">
-      <div class="login-logo">Karaoke<span>Live</span></div>
-      <p class="login-subtitle">Area do Organizador</p>
-      <div class="login-form">
-        <div class="input-group">
-          <label>Usuario</label>
-          <div class="input-icon-wrap">
-            <i class="ti ti-user"></i>
-            <input type="text" id="loginUser" placeholder="seu usuario" onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()" />
-          </div>
-        </div>
-        <div class="input-group">
-          <label>Senha</label>
-          <div class="input-icon-wrap">
-            <i class="ti ti-lock"></i>
-            <input type="password" id="loginPass" placeholder="sua senha" onkeydown="if(event.key==='Enter')doLogin()" />
-            <button class="password-toggle" onclick="togglePassword()" type="button"><i class="ti ti-eye" id="toggleIcon"></i></button>
-          </div>
-        </div>
-        <div class="login-error" id="loginError"></div>
-        <button class="btn-primary" id="loginBtn" onclick="doLogin()"><i class="ti ti-lock-open"></i> Entrar</button>
-      </div>
-      <div class="login-footer">Acesso restrito ao organizador.<br>Participantes entram pelo QR Code.</div>
-    </div>
-  </div>
-"""
-html = html.replace('<div class="screen host-screen', login_html + '\n  <div class="screen host-screen')
-html = html.replace('class="screen host-screen active"', 'class="screen host-screen"')
+login = '<div class="screen login-screen" id="screen-login"><div class="login-card"><div style="font-family:Boogaloo,sans-serif;font-size:32px;color:#ff3c6e">KaraokeLive</div><p style="color:#7a78a0;font-size:13px">Area do Organizador</p><div style="width:100%"><div style="margin-bottom:12px"><label style="font-size:11px;color:#7a78a0;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px">Usuario</label><input id="loginUser" type="text" placeholder="seu usuario" onkeydown="if(event.key==\'Enter\')document.getElementById(\'loginPass\').focus()" style="width:100%;background:#16162a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0eeff;font-size:15px;padding:10px 14px;outline:none;box-sizing:border-box"/></div><div style="margin-bottom:12px"><label style="font-size:11px;color:#7a78a0;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px">Senha</label><input id="loginPass" type="password" placeholder="sua senha" onkeydown="if(event.key==\'Enter\')doLogin()" style="width:100%;background:#16162a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0eeff;font-size:15px;padding:10px 14px;outline:none;box-sizing:border-box"/></div><div id="loginError" style="display:none;background:rgba(255,60,110,0.12);border:1px solid rgba(255,60,110,0.25);border-radius:10px;color:#ff3c6e;font-size:13px;padding:10px;text-align:center;margin-bottom:8px"></div><button onclick="doLogin()" style="width:100%;background:linear-gradient(135deg,#ff3c6e,#c4005a);border:none;border-radius:12px;color:#fff;font-family:Boogaloo,sans-serif;font-size:19px;padding:12px;cursor:pointer">Entrar</button></div></div></div>'
+if 'screen-login' not in html:
+    html = html.replace('<div class="screen host-screen', login + '\n  <div class="screen host-screen', 1)
+    html = html.replace('class="screen host-screen active"', 'class="screen host-screen"', 1)
 open('index.html','w').write(html)
-print('OK login adicionado, tamanho:', len(html))
+print('login ok?', 'screen-login' in open('index.html').read())
