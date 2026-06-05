@@ -3,9 +3,9 @@
 /* ─── Constantes ─── */
 
 const USERS = [
-  { user: 'admin',     pass: 'karaoke123',  name: 'Administrador' },
-  { user: 'dj',        pass: 'festa2025',   name: 'DJ'            },
-  { user: 'anfitriao', pass: 'vamoscantar', name: 'Anfitrião'     },
+  { user: 'admin',     pass: 'Byte4team',  name: 'Administrador' },
+  { user: 'dj',        pass: 'Byte4team',   name: 'DJ'            },
+  { user: 'anfitriao', pass: 'Byte4team', name: 'Anfitrião'     },
 ];
 const COLORS = [
   '#ff3c6e', '#ffb800', '#00e5c4', '#a78bfa',
