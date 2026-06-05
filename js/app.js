@@ -1,50 +1,96 @@
 /* ===== KaraokêLive — app.js ===== */
 
-const COLORS = ['#ff3c6e','#ffb800','#00e5c4','#a78bfa','#fb923c','#34d399','#60a5fa','#f472b6'];
+/* ─── Constantes ─── */
 
-const SONGS_DEMO = [
-  ['Carlos',   'Evidências — Chitãozinho & Xororó'],
-  ['Juliana',  'Bohemian Rhapsody — Queen'],
-  ['Roberto',  'Ai Se Eu Te Pego — Michel Teló'],
-  ['Fernanda', 'Shallow — Lady Gaga'],
-  ['Marcos',   'Garota de Ipanema — Tom Jobim'],
-  ['Larissa',  'Rolling in the Deep — Adele'],
-  ['Paulo',    'Você Não Vale Nada — Gusttavo Lima'],
-  ['Taís',     'My Way — Frank Sinatra'],
+const COLORS = [
+  '#ff3c6e', '#ffb800', '#00e5c4', '#a78bfa',
+  '#fb923c', '#34d399', '#60a5fa', '#f472b6',
 ];
 
+/* ─── Estado global ─── */
+
 const state = {
-  partyName:     '',
-  partyCode:     '',
-  queue:         [],
+  partyName:      '',
+  partyCode:      '',
+  queue:          [],
   currentSinging: 0,
-  myIndex:       -1,
-  myName:        '',
-  mySong:        '',
-  demoCount:     0,
-  qrGenerated:   false,
+  myIndex:        -1,
+  myName:         '',
+  mySong:         '',
+  demoCount:      0,
+  qrGenerated:    false,
 };
 
-/* ─── Navigation ─── */
+/* ─── Autenticação ─── */
+/* USERS é carregado pelo js/users.js, antes deste arquivo */
+
+let loggedUser = null;
+
+function checkAuth() {
+  const saved = sessionStorage.getItem('kl_auth');
+  if (saved) {
+    const found = USERS.find(u => u.user === saved);
+    if (found) { loggedUser = found; return true; }
+  }
+  return false;
+}
+
+function doLogin() {
+  const user  = document.getElementById('loginUser').value.trim().toLowerCase();
+  const pass  = document.getElementById('loginPass').value;
+  const err   = document.getElementById('loginError');
+  const found = USERS.find(u => u.user === user && u.pass === pass);
+
+  if (found) {
+    loggedUser = found;
+    sessionStorage.setItem('kl_auth', found.user);
+    err.classList.remove('show');
+    showScreen('host');
+  } else {
+    err.textContent = 'Usuário ou senha incorretos.';
+    err.classList.add('show');
+  }
+}
+
+function doLogout() {
+  loggedUser = null;
+  sessionStorage.removeItem('kl_auth');
+  showScreen('login');
+}
+
+function togglePassword() {
+  const input = document.getElementById('loginPass');
+  const icon  = document.getElementById('toggleIcon');
+  const isPass = input.type === 'password';
+  input.type   = isPass ? 'text' : 'password';
+  icon.className = isPass ? 'ti ti-eye-off' : 'ti ti-eye';
+}
+
+/* ─── Navegação ─── */
+
 function showScreen(s) {
   document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
   document.getElementById('screen-' + s).classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach((b, i) => {
-    b.classList.toggle('active', ['host','join','queue'][i] === s);
+  document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', ['host', 'join', 'queue'][i] === s);
   });
   if (s === 'queue') renderQueue();
 }
 
-/* ─── Host: generate party ─── */
+/* ─── Host: criar festa ─── */
+
 function generateParty() {
   const name = document.getElementById('partyName').value.trim() || 'Minha Festa';
-  state.partyName     = name;
-  state.partyCode     = Math.random().toString(36).substring(2, 7).toUpperCase();
-  state.queue         = [];
-  state.currentSinging = 0;
-  state.demoCount     = 0;
-  state.myIndex       = -1;
-  state.qrGenerated   = true;
+
+  Object.assign(state, {
+    partyName:      name,
+    partyCode:      Math.random().toString(36).substring(2, 7).toUpperCase(),
+    queue:          [],
+    currentSinging: 0,
+    demoCount:      0,
+    myIndex:        -1,
+    qrGenerated:    true,
+  });
 
   document.getElementById('setup-section').style.display   = 'none';
   document.getElementById('qr-section').style.display      = 'flex';
@@ -60,7 +106,207 @@ function generateParty() {
   updateHostMonitor();
 }
 
-/* ─── QR code canvas ─── */
+function resetParty() {
+  Object.assign(state, {
+    partyName: '', partyCode: '', queue: [], currentSinging: 0,
+    myIndex: -1, myName: '', mySong: '', demoCount: 0, qrGenerated: false,
+  });
+  document.getElementById('setup-section').style.display   = '';
+  document.getElementById('qr-section').style.display      = 'none';
+  document.getElementById('monitor-section').style.display = 'none';
+}
+
+/* ─── Host: ações de demo ─── */
+
+const SONGS_DEMO = [
+  ['Carlos',   'Evidências — Chitãozinho & Xororó'],
+  ['Juliana',  'Bohemian Rhapsody — Queen'],
+  ['Roberto',  'Ai Se Eu Te Pego — Michel Teló'],
+  ['Fernanda', 'Shallow — Lady Gaga'],
+  ['Marcos',   'Garota de Ipanema — Tom Jobim'],
+  ['Larissa',  'Rolling in the Deep — Adele'],
+  ['Paulo',    'Você Não Vale Nada — Gusttavo Lima'],
+  ['Taís',     'My Way — Frank Sinatra'],
+];
+
+function simJoin() {
+  if (!state.qrGenerated) { generateParty(); return; }
+  if (state.demoCount >= SONGS_DEMO.length) return;
+  const [name, song] = SONGS_DEMO[state.demoCount++];
+  addToQueue(name, song);
+}
+
+function advanceQueue() {
+  if (state.queue.length === 0) return;
+  state.currentSinging = Math.min(state.currentSinging + 1, state.queue.length);
+  updateHostMonitor();
+  if (document.getElementById('screen-queue').classList.contains('active')) renderQueue();
+}
+
+function copyLink() {
+  const link = 'https://' + document.getElementById('partyLinkDisplay').textContent;
+  navigator.clipboard.writeText(link).catch(() => {});
+  const btn  = document.querySelector('[onclick="copyLink()"]');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<i class="ti ti-check"></i> Copiado!';
+  setTimeout(() => { btn.innerHTML = orig; }, 2000);
+}
+
+/* ─── Fila: helpers ─── */
+
+function addToQueue(name, song) {
+  state.queue.push({
+    name,
+    song,
+    color: COLORS[state.queue.length % COLORS.length],
+    id:    Date.now() + Math.random(),
+  });
+  updateHostMonitor();
+}
+
+function updateHostMonitor() {
+  const list  = document.getElementById('hostQueueList');
+  const count = document.getElementById('queueCount');
+  count.textContent = state.queue.length;
+
+  if (state.queue.length === 0) {
+    list.innerHTML = '<div class="empty-queue"><i class="ti ti-music-off"></i><br>Nenhum participante ainda.<br>Compartilhe o QR Code!</div>';
+    return;
+  }
+
+  list.innerHTML = state.queue.map((p, i) => {
+    const singing = i === state.currentSinging - 1;
+    const next    = i === state.currentSinging;
+    const cls     = singing ? 'singing' : next ? 'next' : '';
+    const tag     = singing
+      ? '<span class="status-tag singing">🎤 Cantando</span>'
+      : next ? '<span class="status-tag next">⚡ Próximo</span>' : '';
+
+    return `<div class="queue-item-mini ${cls}">
+      <span class="pos-badge ${cls}">${i + 1}</span>
+      <div class="item-info">
+        <div class="item-name">${p.name}</div>
+        <div class="item-song">${p.song}</div>
+      </div>
+      ${tag}
+    </div>`;
+  }).join('');
+}
+
+/* ─── Participante: entrar na fila ─── */
+
+function joinQueue() {
+  const nameEl = document.getElementById('participantName');
+  const songEl = document.getElementById('participantSong');
+  const name   = nameEl.value.trim();
+  const song   = songEl.value.trim();
+
+  nameEl.style.borderColor = name ? '' : 'var(--accent)';
+  songEl.style.borderColor = song ? '' : 'var(--accent)';
+  if (!name || !song) return;
+
+  if (!state.qrGenerated) {
+    state.partyName   = 'Aniversário da Ana 🎉';
+    state.partyCode   = 'ANI25';
+    state.qrGenerated = true;
+    document.getElementById('queuePartyBadge').textContent = state.partyName;
+
+    if (state.queue.length === 0) {
+      ['Carlos', 'Juliana', 'Roberto'].forEach((n, i) => addToQueue(n, SONGS_DEMO[i][1]));
+      state.currentSinging = 1;
+    }
+  }
+
+  state.myName = name;
+  state.mySong = song;
+  addToQueue(name, song);
+  state.myIndex = state.queue.length - 1;
+
+  showScreen('queue');
+  renderQueue();
+}
+
+/* ─── Participante: renderizar fila ─── */
+
+function renderQueue() {
+  const list            = document.getElementById('mainQueueList');
+  const myPosDisplay    = document.getElementById('myPosDisplay');
+  const bottomName      = document.getElementById('bottomName');
+  const waitTimeDisplay = document.getElementById('waitTimeDisplay');
+  const myTurnBanner    = document.getElementById('myTurnBanner');
+  const nextBanner      = document.getElementById('nextBanner');
+
+  const q   = state.queue;
+  const cur = state.currentSinging;
+  const mi  = state.myIndex;
+
+  if (q.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:48px 0;color:var(--muted)"><i class="ti ti-music-off" style="font-size:40px"></i><br><br>Fila vazia</div>';
+    return;
+  }
+
+  const isSinging = mi === cur - 1;
+  const isNext    = mi === cur;
+  const myPos     = mi - cur + 1;
+
+  myTurnBanner.classList.toggle('show', isSinging);
+  nextBanner.classList.toggle('show', isNext && !isSinging);
+
+  if (mi < 0) {
+    myPosDisplay.textContent    = '#–';
+    bottomName.textContent      = '–';
+    waitTimeDisplay.textContent = 'Você não está na fila';
+  } else if (isSinging) {
+    myPosDisplay.textContent    = '🎤';
+    bottomName.textContent      = state.myName;
+    waitTimeDisplay.textContent = 'Cantando agora!';
+  } else {
+    myPosDisplay.textContent    = '#' + Math.max(1, myPos);
+    bottomName.textContent      = state.myName + ' — ' + state.mySong;
+    const wait = Math.max(0, myPos - 1);
+    waitTimeDisplay.textContent = wait === 0 ? 'Próximo a cantar!' : `~${wait * 4} min de espera`;
+  }
+
+  list.innerHTML = q.map((p, i) => {
+    const singing = i === cur - 1;
+    const nextUp  = i === cur;
+    const isMe    = i === mi;
+    const isPast  = i < cur - 1;
+
+    let entryClass = '';
+    if (isMe && singing)     entryClass = 'is-singing is-me';
+    else if (singing)        entryClass = 'is-singing';
+    else if (isMe && nextUp) entryClass = 'is-next is-me';
+    else if (nextUp)         entryClass = 'is-next';
+    else if (isMe)           entryClass = 'is-me';
+
+    const numClass   = singing ? 'singing' : nextUp ? 'next' : isMe ? 'me' : '';
+    const statusHtml = singing
+      ? '<span class="entry-status singing">🎤 Cantando</span>'
+      : nextUp ? '<span class="entry-status next">⚡ Próximo</span>' : '';
+    const meTag    = isMe ? '<div class="me-tag">Você</div>' : '';
+    const initials = p.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    const opacity  = (isPast && !isMe) ? 'opacity:0.4' : '';
+
+    return `<div class="queue-entry ${entryClass}" style="${opacity}">
+      ${meTag}
+      <span class="entry-num ${numClass}">${i + 1}</span>
+      <div class="entry-avatar" style="background:${p.color}22;color:${p.color}">${initials}</div>
+      <div class="entry-details">
+        <div class="entry-name">${p.name}</div>
+        <div class="entry-song">🎵 ${p.song}</div>
+      </div>
+      ${statusHtml}
+    </div>`;
+  }).join('');
+
+  if (mi >= 0 && list.children[mi]) {
+    setTimeout(() => list.children[mi].scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
+  }
+}
+
+/* ─── QR Code (canvas) ─── */
+
 function hashStr(s) {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
@@ -77,11 +323,11 @@ function mulberry32(a) {
 }
 
 function drawQR(text) {
-  const canvas  = document.getElementById('qrCanvas');
-  const ctx     = canvas.getContext('2d');
-  const size    = 200, modules = 21;
+  const canvas   = document.getElementById('qrCanvas');
+  const ctx      = canvas.getContext('2d');
+  const size     = 200, modules = 21;
   const cellSize = Math.floor((size - 24) / modules);
-  const offset  = Math.floor((size - modules * cellSize) / 2);
+  const offset   = Math.floor((size - modules * cellSize) / 2);
 
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, size, size);
@@ -116,7 +362,6 @@ function drawQR(text) {
     }
   }
 
-  // centre mic icon
   const cx = size / 2, cy = size / 2;
   ctx.fillStyle = '#ff3c6e';
   ctx.beginPath();
@@ -128,195 +373,10 @@ function drawQR(text) {
   ctx.fillText('🎤', cx, cy);
 }
 
-/* ─── Host: demo actions ─── */
-function simJoin() {
-  if (!state.qrGenerated) { generateParty(); return; }
-  if (state.demoCount >= SONGS_DEMO.length) return;
-  const [name, song] = SONGS_DEMO[state.demoCount++];
-  addToQueue(name, song);
-}
-
-function advanceQueue() {
-  if (state.queue.length === 0) return;
-  state.currentSinging = Math.min(state.currentSinging + 1, state.queue.length);
-  updateHostMonitor();
-  if (document.getElementById('screen-queue').classList.contains('active')) renderQueue();
-}
-
-function copyLink() {
-  const link = 'https://' + document.getElementById('partyLinkDisplay').textContent;
-  navigator.clipboard.writeText(link).catch(() => {});
-  const btn = document.querySelector('[onclick="copyLink()"]');
-  const orig = btn.innerHTML;
-  btn.innerHTML = '<i class="ti ti-check"></i> Copiado!';
-  setTimeout(() => { btn.innerHTML = orig; }, 2000);
-}
-
-function resetParty() {
-  Object.assign(state, {
-    partyName:'', partyCode:'', queue:[], currentSinging:0,
-    myIndex:-1, myName:'', mySong:'', demoCount:0, qrGenerated:false,
-  });
-  document.getElementById('setup-section').style.display   = '';
-  document.getElementById('qr-section').style.display      = 'none';
-  document.getElementById('monitor-section').style.display = 'none';
-}
-
-/* ─── Queue helpers ─── */
-function addToQueue(name, song) {
-  state.queue.push({
-    name, song,
-    color: COLORS[state.queue.length % COLORS.length],
-    id: Date.now() + Math.random(),
-  });
-  updateHostMonitor();
-}
-
-function updateHostMonitor() {
-  const list  = document.getElementById('hostQueueList');
-  const count = document.getElementById('queueCount');
-  count.textContent = state.queue.length;
-
-  if (state.queue.length === 0) {
-    list.innerHTML = '<div class="empty-queue"><i class="ti ti-music-off"></i><br>Nenhum participante ainda.<br>Compartilhe o QR Code!</div>';
-    return;
-  }
-
-  list.innerHTML = state.queue.map((p, i) => {
-    const singing = i === state.currentSinging - 1;
-    const next    = i === state.currentSinging;
-    const cls     = singing ? 'singing' : next ? 'next' : '';
-    const tag     = singing
-      ? '<span class="status-tag singing">🎤 Cantando</span>'
-      : next ? '<span class="status-tag next">⚡ Próximo</span>' : '';
-
-    return `<div class="queue-item-mini ${cls}">
-      <span class="pos-badge ${cls}">${i + 1}</span>
-      <div class="item-info">
-        <div class="item-name">${p.name}</div>
-        <div class="item-song">${p.song}</div>
-      </div>
-      ${tag}
-    </div>`;
-  }).join('');
-}
-
-/* ─── Participant: join ─── */
-function joinQueue() {
-  const nameEl = document.getElementById('participantName');
-  const songEl = document.getElementById('participantSong');
-  const name   = nameEl.value.trim();
-  const song   = songEl.value.trim();
-
-  nameEl.style.borderColor = name ? '' : 'var(--accent)';
-  songEl.style.borderColor = song ? '' : 'var(--accent)';
-  if (!name || !song) return;
-
-  // Auto-bootstrap demo party if organiser hasn't created one yet
-  if (!state.qrGenerated) {
-    state.partyName    = 'Aniversário da Ana 🎉';
-    state.partyCode    = 'ANI25';
-    state.qrGenerated  = true;
-    document.getElementById('queuePartyBadge').textContent = state.partyName;
-
-    if (state.queue.length === 0) {
-      ['Carlos','Juliana','Roberto'].forEach((n, i) => addToQueue(n, SONGS_DEMO[i][1]));
-      state.currentSinging = 1;
-    }
-  }
-
-  state.myName = name;
-  state.mySong = song;
-  addToQueue(name, song);
-  state.myIndex = state.queue.length - 1;
-
-  showScreen('queue');
-  renderQueue();
-}
-
-/* ─── Participant: render queue ─── */
-function renderQueue() {
-  const list           = document.getElementById('mainQueueList');
-  const myPosDisplay   = document.getElementById('myPosDisplay');
-  const bottomName     = document.getElementById('bottomName');
-  const waitTimeDisplay = document.getElementById('waitTimeDisplay');
-  const myTurnBanner   = document.getElementById('myTurnBanner');
-  const nextBanner     = document.getElementById('nextBanner');
-
-  const q   = state.queue;
-  const cur = state.currentSinging;
-  const mi  = state.myIndex;
-
-  if (q.length === 0) {
-    list.innerHTML = '<div style="text-align:center;padding:48px 0;color:var(--muted)"><i class="ti ti-music-off" style="font-size:40px"></i><br><br>Fila vazia</div>';
-    return;
-  }
-
-  const isSinging = mi === cur - 1;
-  const isNext    = mi === cur;
-  const myPos     = mi - cur + 1;
-
-  myTurnBanner.classList.toggle('show', isSinging);
-  nextBanner.classList.toggle('show', isNext && !isSinging);
-
-  if (mi < 0) {
-    myPosDisplay.textContent   = '#–';
-    bottomName.textContent     = '–';
-    waitTimeDisplay.textContent = 'Você não está na fila';
-  } else if (isSinging) {
-    myPosDisplay.textContent   = '🎤';
-    bottomName.textContent     = state.myName;
-    waitTimeDisplay.textContent = 'Cantando agora!';
-  } else {
-    myPosDisplay.textContent   = '#' + Math.max(1, myPos);
-    bottomName.textContent     = state.myName + ' — ' + state.mySong;
-    const wait = Math.max(0, myPos - 1);
-    waitTimeDisplay.textContent = wait === 0 ? 'Próximo a cantar!' : `~${wait * 4} min de espera`;
-  }
-
-  list.innerHTML = q.map((p, i) => {
-    const singing = i === cur - 1;
-    const nextUp  = i === cur;
-    const isMe    = i === mi;
-    const isPast  = i < cur - 1;
-
-    let entryClass = '';
-    if (isMe && singing)       entryClass = 'is-singing is-me';
-    else if (singing)          entryClass = 'is-singing';
-    else if (isMe && nextUp)   entryClass = 'is-next is-me';
-    else if (nextUp)           entryClass = 'is-next';
-    else if (isMe)             entryClass = 'is-me';
-
-    const numClass   = singing ? 'singing' : nextUp ? 'next' : isMe ? 'me' : '';
-    const statusHtml = singing
-      ? '<span class="entry-status singing">🎤 Cantando</span>'
-      : nextUp ? '<span class="entry-status next">⚡ Próximo</span>' : '';
-    const meTag      = isMe ? '<div class="me-tag">Você</div>' : '';
-    const initials   = p.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
-    const opacity    = (isPast && !isMe) ? 'opacity:0.4' : '';
-
-    return `<div class="queue-entry ${entryClass}" style="${opacity}">
-      ${meTag}
-      <span class="entry-num ${numClass}">${i + 1}</span>
-      <div class="entry-avatar" style="background:${p.color}22;color:${p.color}">${initials}</div>
-      <div class="entry-details">
-        <div class="entry-name">${p.name}</div>
-        <div class="entry-song">🎵 ${p.song}</div>
-      </div>
-      ${statusHtml}
-    </div>`;
-  }).join('');
-
-  // Scroll participant's card into view
-  if (mi >= 0 && list.children[mi]) {
-    setTimeout(() => list.children[mi].scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
-  }
-}
-
 /* ─── Init ─── */
-if(checkAuth()){showScreen('host');}else{showScreen('login');}const USERS=[{user:'admin',pass:'karaoke123',name:'Administrador'},{user:'dj',pass:'festa2025',name:'DJ'},{user:'anfitriao',pass:'vamoscantar',name:'Anfitriao'}];
-let loggedUser=null;
-function checkAuth(){const s=sessionStorage.getItem('kl_auth');if(s){const u=USERS.find(x=>x.user===s);if(u){loggedUser=u;return true;}}return false;}
-function doLogin(){const user=document.getElementById('loginUser').value.trim().toLowerCase();const pass=document.getElementById('loginPass').value;const err=document.getElementById('loginError');const found=USERS.find(x=>x.user===user&&x.pass===pass);if(found){loggedUser=found;sessionStorage.setItem('kl_auth',found.user);err.classList.remove('show');if(checkAuth()){showScreen('host');}else{showScreen('login');}}else{err.textContent='Usuario ou senha incorretos.';err.classList.add('show');}}
-function doLogout(){loggedUser=null;sessionStorage.removeItem('kl_auth');showScreen('login');}
-function togglePassword(){const i=document.getElementById('loginPass');const ic=document.getElementById('toggleIcon');i.type=i.type==='password'?'text':'password';ic.className=i.type==='password'?'ti ti-eye':'ti ti-eye-off';}
+
+if (checkAuth()) {
+  showScreen('host');
+} else {
+  showScreen('login');
+}
