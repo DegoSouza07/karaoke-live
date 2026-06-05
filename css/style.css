@@ -522,7 +522,7 @@ html, body {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  padding: 16px 20px;
+  padding: 10px 20px;
   background: var(--surface);
   border-top: 1px solid var(--border);
   position: fixed;
@@ -531,13 +531,13 @@ html, body {
 }
 
 .footer-logo {
-  height: 32px;
+  height: 28px;
   border-radius: 6px;
-  opacity: 0.85;
+  opacity: 0.6;
 }
 
 .site-footer span {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--muted);
   letter-spacing: 1px;
   text-transform: uppercase;
