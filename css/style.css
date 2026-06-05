@@ -364,12 +364,32 @@ html, body {
 
 /* ===== FOOTER ===== */
 .site-footer {
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  padding: 0 20px; background: var(--surface); border-top: 1px solid var(--border);
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 60; height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 20px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 60;
+  height: 44px;
 }
-.footer-logo { height: 22px; border-radius: 4px; opacity: 0.55; }
-.site-footer span { font-size: 10px; color: var(--muted); letter-spacing: 0.8px; text-transform: uppercase; }
+
+.footer-logo {
+  height: 30px;
+  width: auto;
+  border-radius: 4px;
+  opacity: 0.7;
+}
+
+.site-footer span {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 480px) {
