@@ -19,16 +19,16 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:       #0d0d1a;
-  --surface:  #16162a;
-  --card:     #1e1e35;
-  --accent:   #ff3c6e;
-  --accent2:  #ffb800;
-  --accent3:  #00e5c4;
-  --text:     #f0eeff;
-  --muted:    #7a78a0;
-  --border:   rgba(255,255,255,0.08);
-  --radius:   14px;
+  --bg:         #0d0d1a;
+  --surface:    #16162a;
+  --card:       #1e1e35;
+  --accent:     #ff3c6e;
+  --accent2:    #ffb800;
+  --accent3:    #00e5c4;
+  --text:       #f0eeff;
+  --muted:      #7a78a0;
+  --border:     rgba(255,255,255,0.08);
+  --radius:     14px;
   --font-title: 'Boogaloo', sans-serif;
   --font-body:  'DM Sans', sans-serif;
 }
@@ -55,7 +55,6 @@ html, body {
   top: 0;
   z-index: 100;
 }
-
 .nav-btn {
   font-family: var(--font-body);
   font-size: 13px;
@@ -70,11 +69,12 @@ html, body {
   align-items: center;
   gap: 6px;
 }
-.nav-btn.active  { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.nav-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 .nav-btn:hover:not(.active) { border-color: var(--accent3); color: var(--accent3); }
+.demo-nav.locked .nav-btn { opacity: 0.3; pointer-events: none; cursor: not-allowed; }
 
 /* ===== SCREEN SYSTEM ===== */
-.screen       { display: none; }
+.screen        { display: none; }
 .screen.active { display: flex; }
 
 /* ===== SHARED ===== */
@@ -125,7 +125,7 @@ html, body {
   gap: 5px;
   white-space: nowrap;
 }
-.btn-secondary:hover   { border-color: var(--accent3); color: var(--accent3); }
+.btn-secondary:hover { border-color: var(--accent3); color: var(--accent3); }
 .btn-secondary.btn-danger:hover { border-color: var(--accent); color: var(--accent); }
 
 .input-group { margin-bottom: 14px; }
@@ -152,6 +152,108 @@ html, body {
 }
 .input-group input:focus { border-color: var(--accent); }
 
+/* ===== LOGIN SCREEN ===== */
+.login-screen {
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: var(--bg);
+  flex-direction: column;
+}
+.login-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 36px 28px 28px;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: fadeUp 0.45s cubic-bezier(.34,1.4,.64,1) both;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(24px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.login-logo-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.login-logo-icon {
+  width: 80px; height: 80px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #ff3c6e, #c4005a);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px;
+  animation: glow 3s ease-in-out infinite;
+}
+@keyframes glow {
+  0%,100% { box-shadow: 0 8px 32px rgba(255,60,110,0.45); }
+  50%      { box-shadow: 0 8px 48px rgba(255,60,110,0.7); }
+}
+.login-brand {
+  font-family: var(--font-title);
+  font-size: 30px;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+}
+.login-brand span { -webkit-text-fill-color: var(--accent3); }
+.login-tagline {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: -8px;
+}
+.login-divider { width: 100%; height: 1px; background: var(--border); }
+.login-form { width: 100%; }
+.input-icon-wrap { position: relative; }
+.input-icon-wrap i {
+  position: absolute; left: 12px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted); font-size: 17px; pointer-events: none;
+}
+.input-icon-wrap input { padding-left: 40px !important; }
+.password-toggle {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none; color: var(--muted);
+  cursor: pointer; font-size: 17px; padding: 0;
+  display: flex; align-items: center;
+  transition: color 0.2s;
+}
+.password-toggle:hover { color: var(--text); }
+.login-error {
+  background: rgba(255,60,110,0.12);
+  border: 1px solid rgba(255,60,110,0.25);
+  border-radius: 10px;
+  color: var(--accent);
+  font-size: 13px;
+  padding: 10px 14px;
+  text-align: center;
+  display: none;
+  margin-bottom: 4px;
+}
+.login-error.show { display: block; }
+.login-footer {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.7;
+}
+
 /* ===== HOST SCREEN ===== */
 .host-screen {
   flex-direction: column;
@@ -159,7 +261,6 @@ html, body {
   padding: 24px 16px 48px;
   gap: 20px;
 }
-
 .host-card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -177,7 +278,6 @@ html, body {
   align-items: center;
   gap: 8px;
 }
-
 .qr-wrapper {
   flex-direction: column;
   align-items: center;
@@ -197,14 +297,7 @@ html, body {
   align-items: center;
   gap: 8px;
 }
-
-#qrCanvas {
-  border-radius: 12px;
-  background: #fff;
-  padding: 8px;
-  display: block;
-}
-
+#qrCanvas { border-radius: 12px; background: #fff; padding: 8px; display: block; }
 .party-code {
   font-family: var(--font-title);
   font-size: 30px;
@@ -215,7 +308,6 @@ html, body {
   border-radius: 10px;
   border: 2px dashed rgba(255,184,0,0.3);
 }
-
 .party-link {
   font-size: 12px;
   color: var(--muted);
@@ -223,13 +315,7 @@ html, body {
   word-break: break-all;
   max-width: 280px;
 }
-
-.btn-row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 
 /* ===== MONITOR ===== */
 .live-monitor {
@@ -249,7 +335,6 @@ html, body {
   align-items: center;
   justify-content: space-between;
 }
-
 .pulse-dot {
   width: 10px; height: 10px;
   border-radius: 50%;
@@ -259,19 +344,12 @@ html, body {
   margin-right: 4px;
 }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
-
-.legend {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-}
+.legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
 .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); }
 .color-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .color-dot.teal   { background: var(--accent3); }
 .color-dot.yellow { background: var(--accent2); }
 .color-dot.gray   { background: var(--muted); }
-
 .queue-mini {
   display: flex;
   flex-direction: column;
@@ -282,7 +360,6 @@ html, body {
 }
 .queue-mini::-webkit-scrollbar { width: 4px; }
 .queue-mini::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
-
 .queue-item-mini {
   display: flex;
   align-items: center;
@@ -295,40 +372,19 @@ html, body {
 }
 .queue-item-mini.singing { border-left-color: var(--accent3); background: rgba(0,229,196,0.07); }
 .queue-item-mini.next    { border-left-color: var(--accent2); }
-
-.pos-badge {
-  font-family: var(--font-title);
-  font-size: 18px;
-  color: var(--muted);
-  min-width: 26px;
-  text-align: center;
-}
+.pos-badge { font-family: var(--font-title); font-size: 18px; color: var(--muted); min-width: 26px; text-align: center; }
 .pos-badge.singing { color: var(--accent3); }
 .pos-badge.next    { color: var(--accent2); }
-
 .item-info { flex: 1; min-width: 0; }
 .item-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .item-song { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
 .status-tag {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 20px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  flex-shrink: 0;
+  font-size: 10px; font-weight: 700; padding: 3px 8px;
+  border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0;
 }
 .status-tag.singing { background: rgba(0,229,196,0.15); color: var(--accent3); }
 .status-tag.next    { background: rgba(255,184,0,0.15);  color: var(--accent2); }
-
-.empty-queue {
-  text-align: center;
-  color: var(--muted);
-  font-size: 14px;
-  padding: 24px 0;
-  line-height: 2;
-}
+.empty-queue { text-align: center; color: var(--muted); font-size: 14px; padding: 24px 0; line-height: 2; }
 
 /* ===== JOIN SCREEN ===== */
 .join-screen {
@@ -337,7 +393,6 @@ html, body {
   justify-content: center;
   padding: 24px 16px;
 }
-
 .join-card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -350,7 +405,6 @@ html, body {
   gap: 14px;
   align-items: center;
 }
-
 .mic-icon {
   width: 64px; height: 64px;
   border-radius: 50%;
@@ -359,23 +413,14 @@ html, body {
   font-size: 28px;
   box-shadow: 0 0 24px rgba(255,60,110,0.4);
 }
-
-.join-title {
-  font-family: var(--font-title);
-  font-size: 26px;
-  text-align: center;
-}
+.join-title { font-family: var(--font-title); font-size: 26px; text-align: center; }
 .join-party-name { font-size: 14px; color: var(--accent3); text-align: center; }
 .divider { width: 100%; height: 1px; background: var(--border); }
 .join-form { width: 100%; }
 .join-hint { font-size: 12px; color: var(--muted); text-align: center; }
 
 /* ===== QUEUE SCREEN ===== */
-.queue-screen {
-  flex-direction: column;
-  min-height: calc(100vh - 53px);
-}
-
+.queue-screen { flex-direction: column; min-height: calc(100vh - 53px); }
 .queue-header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -386,7 +431,6 @@ html, body {
   flex-shrink: 0;
 }
 .queue-header .logo { font-size: 20px; }
-
 .party-badge {
   font-family: var(--font-title);
   font-size: 13px;
@@ -400,7 +444,6 @@ html, body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .my-turn-banner {
   background: linear-gradient(135deg, var(--accent), #c4005a);
   padding: 14px 20px;
@@ -414,7 +457,6 @@ html, body {
 }
 .my-turn-banner.show { display: block; }
 @keyframes banner-pulse { from{opacity:1} to{opacity:0.75} }
-
 .next-banner {
   background: rgba(255,184,0,0.12);
   border-bottom: 1px solid rgba(255,184,0,0.2);
@@ -427,7 +469,6 @@ html, body {
   flex-shrink: 0;
 }
 .next-banner.show { display: block; }
-
 .queue-list {
   flex: 1;
   overflow-y: auto;
@@ -438,7 +479,6 @@ html, body {
 }
 .queue-list::-webkit-scrollbar { width: 4px; }
 .queue-list::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
-
 .queue-entry {
   display: flex;
   align-items: center;
@@ -453,53 +493,28 @@ html, body {
 .queue-entry.is-me      { border-color: var(--accent);  background: rgba(255,60,110,0.08);  box-shadow: 0 0 18px rgba(255,60,110,0.12); }
 .queue-entry.is-singing { border-color: var(--accent3); background: rgba(0,229,196,0.07); }
 .queue-entry.is-next    { border-color: var(--accent2); background: rgba(255,184,0,0.06); }
-
 .me-tag {
-  position: absolute;
-  top: 8px; right: 10px;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--accent);
-  background: rgba(255,60,110,0.15);
-  padding: 2px 8px;
-  border-radius: 20px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  position: absolute; top: 8px; right: 10px;
+  font-size: 10px; font-weight: 700; color: var(--accent);
+  background: rgba(255,60,110,0.15); padding: 2px 8px;
+  border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
 }
-
-.entry-num {
-  font-family: var(--font-title);
-  font-size: 22px;
-  color: var(--muted);
-  min-width: 30px;
-  text-align: center;
-}
+.entry-num { font-family: var(--font-title); font-size: 22px; color: var(--muted); min-width: 30px; text-align: center; }
 .entry-num.singing { color: var(--accent3); }
 .entry-num.next    { color: var(--accent2); }
 .entry-num.me      { color: var(--accent); }
-
 .entry-avatar {
-  width: 38px; height: 38px;
-  border-radius: 50%;
+  width: 38px; height: 38px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-title);
-  font-size: 17px;
-  flex-shrink: 0;
+  font-family: var(--font-title); font-size: 17px; flex-shrink: 0;
 }
-
 .entry-details { flex: 1; min-width: 0; }
 .entry-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .entry-song { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
 .entry-status {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 20px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-  flex-shrink: 0;
+  font-size: 10px; font-weight: 700; padding: 4px 10px;
+  border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
+  white-space: nowrap; flex-shrink: 0;
 }
 .entry-status.singing { background: rgba(0,229,196,0.15); color: var(--accent3); }
 .entry-status.next    { background: rgba(255,184,0,0.15);  color: var(--accent2); }
@@ -518,14 +533,12 @@ html, body {
   -webkit-backdrop-filter: blur(10px);
   z-index: 50;
 }
-
 .my-position-info { display: flex; flex-direction: column; flex-shrink: 0; }
 .my-pos-label { font-size: 11px; color: var(--muted); }
 .my-pos-num   { font-family: var(--font-title); font-size: 22px; color: var(--accent); }
-
 .bottom-details { flex: 1; min-width: 0; }
-.bottom-name  { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.wait-time    { font-size: 11px; color: var(--muted); }
+.bottom-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wait-time   { font-size: 11px; color: var(--muted); }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 480px) {
@@ -534,154 +547,6 @@ html, body {
   .btn-row { gap: 6px; }
   .btn-secondary { font-size: 12px; padding: 7px 10px; }
 }
-
-/* ===== LOGIN SCREEN ===== */
-.login-screen {
-  min-height: 100vh;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 16px;
-  background: var(--bg);
-  flex-direction: column;
-}
-
-.login-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  padding: 36px 28px 28px;
-  width: 100%;
-  max-width: 400px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  animation: fadeUp 0.45s cubic-bezier(.34,1.4,.64,1) both;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-}
-
-@keyframes fadeUp {
-  from { opacity:0; transform:translateY(24px); }
-  to   { opacity:1; transform:translateY(0); }
-}
-
-.login-logo-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 4px;
-}
-
-.login-logo-icon {
-  width: 80px; height: 80px;
-  border-radius: 22px;
-  background: linear-gradient(135deg, #ff3c6e, #c4005a);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 36px;
-  box-shadow: 0 8px 32px rgba(255,60,110,0.45);
-  animation: glow 3s ease-in-out infinite;
-}
-
-@keyframes glow {
-  0%,100% { box-shadow: 0 8px 32px rgba(255,60,110,0.45); }
-  50%      { box-shadow: 0 8px 48px rgba(255,60,110,0.7); }
-}
-
-.login-brand {
-  font-family: var(--font-title);
-  font-size: 30px;
-  letter-spacing: 1px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-align: center;
-}
-.login-brand span { -webkit-text-fill-color: var(--accent3); }
-
-.login-tagline {
-  font-size: 12px;
-  color: var(--muted2);
-  text-align: center;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin-top: -8px;
-}
-
-.login-divider {
-  width: 100%;
-  height: 1px;
-  background: var(--border);
-}
-
-.login-form { width: 100%; }
-
-.input-icon-wrap {
-  position: relative;
-}
-.input-icon-wrap i {
-  position: absolute; left: 12px; top: 50%;
-  transform: translateY(-50%);
-  color: var(--muted); font-size: 17px; pointer-events: none;
-}
-.input-icon-wrap input { padding-left: 40px !important; }
-
-.password-toggle {
-  position: absolute; right: 12px; top: 50%;
-  transform: translateY(-50%);
-  background: none; border: none; color: var(--muted);
-  cursor: pointer; font-size: 17px; padding: 0;
-  display: flex; align-items: center;
-  transition: color 0.2s;
-}
-.password-toggle:hover { color: var(--text); }
-
-.login-error {
-  background: rgba(255,60,110,0.12);
-  border: 1px solid rgba(255,60,110,0.25);
-  border-radius: 10px;
-  color: var(--accent);
-  font-size: 13px;
-  padding: 10px 14px;
-  text-align: center;
-  display: none;
-  margin-bottom: 4px;
-  animation: fadeUp 0.2s ease both;
-}
-.login-error.show { display: block; }
-
-.login-footer {
-  font-size: 11px;
-  color: var(--muted);
-  text-align: center;
-  line-height: 1.7;
-}
-
-.powered-by {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 4px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
-  width: 100%;
-}
-.powered-by span { font-size: 11px; color: var(--muted); }
-.powered-by img  { height: 18px; opacity: 0.55; filter: brightness(1.5); }
-
-/* Nav oculto no login */
-.demo-nav.locked .nav-btn { opacity: 0.3; pointer-events: none; cursor: not-allowed; }
-
-@keyframes shake {
-  0%,100% { transform: translateX(0); }
-  20%      { transform: translateX(-8px); }
-  40%      { transform: translateX(8px); }
-  60%      { transform: translateX(-5px); }
-  80%      { transform: translateX(5px); }
-}
-
   </style>
 </head>
 <body>
@@ -703,7 +568,7 @@ html, body {
       <div class="login-divider"></div>
       <div class="login-form">
         <div class="input-group">
-          <label>Usuario</label>
+          <label>Usuário</label>
           <div class="input-icon-wrap">
             <i class="ti ti-user"></i>
             <input type="text" id="loginUser" placeholder="seu usuario"
@@ -735,10 +600,6 @@ html, body {
 
   <!-- ORGANIZADOR -->
   <div class="screen host-screen" id="screen-host">
-    <div class="host-topbar">
-      <div class="logo">&#127908; Karaok<span>e</span>Live</div>
-      <button class="btn-logout" onclick="doLogout()"><i class="ti ti-logout"></i> Sair</button>
-    </div>
     <div id="setup-section" class="host-card">
       <h2><i class="ti ti-confetti"></i> Nova Festa</h2>
       <div class="input-group">
@@ -746,12 +607,15 @@ html, body {
         <input type="text" id="partyName" placeholder="Ex: Aniversario da Ana" value="Aniversario da Ana" />
       </div>
       <div class="input-group">
-        <label>Local / Endereco (opcional)</label>
+        <label>Local / Endereço (opcional)</label>
         <input type="text" id="partyPlace" placeholder="Ex: Salao do Clube" value="Salao do Clube" />
       </div>
       <button class="btn-primary" onclick="generateParty()">
         <i class="ti ti-qrcode"></i> Gerar QR Code da Festa
       </button>
+      <div style="margin-top:16px;text-align:right">
+        <button class="btn-secondary btn-danger" onclick="doLogout()"><i class="ti ti-logout"></i> Sair</button>
+      </div>
     </div>
     <div id="qr-section" class="qr-wrapper" style="display:none;">
       <h3><i class="ti ti-qrcode"></i> QR Code da Festa</h3>
@@ -761,7 +625,7 @@ html, body {
       <div class="btn-row">
         <button class="btn-secondary" onclick="copyLink()"><i class="ti ti-copy"></i> Copiar link</button>
         <button class="btn-secondary" onclick="simJoin()"><i class="ti ti-user-plus"></i> Simular entrada</button>
-        <button class="btn-secondary" onclick="advanceQueue()"><i class="ti ti-player-skip-forward"></i> Proximo</button>
+        <button class="btn-secondary" onclick="advanceQueue()"><i class="ti ti-player-skip-forward"></i> Próximo</button>
         <button class="btn-secondary btn-danger" onclick="resetParty()"><i class="ti ti-refresh"></i> Nova festa</button>
       </div>
     </div>
@@ -772,7 +636,7 @@ html, body {
       </h2>
       <div class="legend">
         <div class="legend-item"><span class="color-dot teal"></span> Cantando</div>
-        <div class="legend-item"><span class="color-dot yellow"></span> Proximo</div>
+        <div class="legend-item"><span class="color-dot yellow"></span> Próximo</div>
         <div class="legend-item"><span class="color-dot gray"></span> Aguardando</div>
       </div>
       <div class="queue-mini" id="hostQueueList">
@@ -794,14 +658,14 @@ html, body {
           <input type="text" id="participantName" placeholder="Como te chamamos?" />
         </div>
         <div class="input-group">
-          <label>Musica escolhida</label>
+          <label>Música escolhida</label>
           <input type="text" id="participantSong" placeholder="Nome da musica e artista" />
         </div>
         <button class="btn-primary" onclick="joinQueue()">
           <i class="ti ti-arrow-right"></i> Entrar na fila
         </button>
       </div>
-      <p class="join-hint">Voce podera acompanhar sua posicao em tempo real apos entrar.</p>
+      <p class="join-hint">Você poderá acompanhar sua posição em tempo real após entrar.</p>
     </div>
   </div>
 
@@ -811,12 +675,12 @@ html, body {
       <div class="logo">&#127908; KaraokeLive</div>
       <div class="party-badge" id="queuePartyBadge">Festa</div>
     </div>
-    <div class="my-turn-banner" id="myTurnBanner">&#127908; E A SUA VEZ! Vai la!</div>
-    <div class="next-banner" id="nextBanner">Voce e o proximo! Prepare-se!</div>
+    <div class="my-turn-banner" id="myTurnBanner">&#127908; É A SUA VEZ! Vai lá!</div>
+    <div class="next-banner" id="nextBanner">Você é o próximo! Prepare-se!</div>
     <div class="queue-list" id="mainQueueList"></div>
     <div class="bottom-bar">
       <div class="my-position-info">
-        <span class="my-pos-label">Sua posicao</span>
+        <span class="my-pos-label">Sua posição</span>
         <span class="my-pos-num" id="myPosDisplay">#-</span>
       </div>
       <div class="bottom-details">
@@ -828,421 +692,13 @@ html, body {
   </div>
 
   <script>
-/* ===== KaraokêLive — app.js ===== */
-
-const COLORS = ['#ff3c6e','#ffb800','#00e5c4','#a78bfa','#fb923c','#34d399','#60a5fa','#f472b6'];
-
-const SONGS_DEMO = [
-  ['Carlos',   'Evidências — Chitãozinho & Xororó'],
-  ['Juliana',  'Bohemian Rhapsody — Queen'],
-  ['Roberto',  'Ai Se Eu Te Pego — Michel Teló'],
-  ['Fernanda', 'Shallow — Lady Gaga'],
-  ['Marcos',   'Garota de Ipanema — Tom Jobim'],
-  ['Larissa',  'Rolling in the Deep — Adele'],
-  ['Paulo',    'Você Não Vale Nada — Gusttavo Lima'],
-  ['Taís',     'My Way — Frank Sinatra'],
-];
-
-const state = {
-  partyName:     '',
-  partyCode:     '',
-  queue:         [],
-  currentSinging: 0,
-  myIndex:       -1,
-  myName:        '',
-  mySong:        '',
-  demoCount:     0,
-  qrGenerated:   false,
-};
-
-/* ─── Navigation ─── */
-function showScreen(s) {
-  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-  const target = document.getElementById('screen-' + s);
-  if (target) { target.classList.add('active'); }
-  const nav = document.getElementById('navBar');
-  if (nav) { nav.classList.toggle('locked', !loggedUser); }
-  document.querySelectorAll('.nav-btn').forEach((b, i) => {
-    b.classList.toggle('active', ['host','join','queue'][i] === s);
-  });
-  if (s === 'queue') renderQueue();
-  if (s === 'host') updateUserBadge();
-}
-
-/* ─── Host: generate party ─── */
-function generateParty() {
-  const name = document.getElementById('partyName').value.trim() || 'Minha Festa';
-  state.partyName     = name;
-  state.partyCode     = Math.random().toString(36).substring(2, 7).toUpperCase();
-  state.queue         = [];
-  state.currentSinging = 0;
-  state.demoCount     = 0;
-  state.myIndex       = -1;
-  state.qrGenerated   = true;
-
-  document.getElementById('setup-section').style.display   = 'none';
-  document.getElementById('qr-section').style.display      = 'flex';
-  document.getElementById('monitor-section').style.display = 'block';
-  document.getElementById('partyCodeDisplay').textContent  = state.partyCode;
-  document.getElementById('joinPartyLabel').textContent    = 'Festa: ' + name;
-  document.getElementById('queuePartyBadge').textContent   = name;
-
-  const link = 'karaokelive.app/festa/' + state.partyCode;
-  document.getElementById('partyLinkDisplay').textContent = link;
-
-  drawQR(link);
-  updateHostMonitor();
-}
-
-/* ─── QR code canvas ─── */
-function hashStr(s) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  return h;
-}
-
-function mulberry32(a) {
-  return function () {
-    a |= 0; a = (a + 0x6D2B79F5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function drawQR(text) {
-  const canvas  = document.getElementById('qrCanvas');
-  const ctx     = canvas.getContext('2d');
-  const size    = 200, modules = 21;
-  const cellSize = Math.floor((size - 24) / modules);
-  const offset  = Math.floor((size - modules * cellSize) / 2);
-
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, size, size);
-
-  const cornerPattern = [
-    [0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],
-    [1,0],[1,6],[2,0],[2,2],[2,3],[2,4],[2,6],
-    [3,0],[3,2],[3,3],[3,4],[3,6],[4,0],[4,2],
-    [4,3],[4,4],[4,6],[5,0],[5,6],[6,0],[6,1],
-    [6,2],[6,3],[6,4],[6,5],[6,6],
-    [14,0],[14,1],[14,2],[14,3],[14,4],[14,5],[14,6],
-    [15,0],[15,6],[16,0],[16,2],[16,3],[16,4],[16,6],
-    [17,0],[17,2],[17,3],[17,4],[17,6],[18,0],[18,2],
-    [18,3],[18,4],[18,6],[19,0],[19,6],
-    [20,0],[20,1],[20,2],[20,3],[20,4],[20,5],[20,6],
-    [0,14],[0,15],[0,16],[0,17],[0,18],[0,19],[0,20],
-    [1,14],[1,20],[2,14],[2,16],[2,17],[2,18],[2,20],
-    [3,14],[3,16],[3,17],[3,18],[3,20],[4,14],[4,16],
-    [4,17],[4,18],[4,20],[5,14],[5,20],
-    [6,14],[6,15],[6,16],[6,17],[6,18],[6,19],[6,20],
-  ];
-
-  const rng = mulberry32(hashStr(text));
-  ctx.fillStyle = '#0d0d1a';
-
-  for (let r = 0; r < modules; r++) {
-    for (let c = 0; c < modules; c++) {
-      const isCorner = cornerPattern.some(([pr, pc]) => pr === r && pc === c);
-      if (isCorner || rng() > 0.5) {
-        ctx.fillRect(offset + c * cellSize, offset + r * cellSize, cellSize - 1, cellSize - 1);
-      }
-    }
-  }
-
-  // centre mic icon
-  const cx = size / 2, cy = size / 2;
-  ctx.fillStyle = '#ff3c6e';
-  ctx.beginPath();
-  ctx.arc(cx, cy, 17, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.font = '16px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('🎤', cx, cy);
-}
-
-/* ─── Host: demo actions ─── */
-function simJoin() {
-  if (!state.qrGenerated) { generateParty(); return; }
-  if (state.demoCount >= SONGS_DEMO.length) return;
-  const [name, song] = SONGS_DEMO[state.demoCount++];
-  addToQueue(name, song);
-}
-
-function advanceQueue() {
-  if (state.queue.length === 0) return;
-  state.currentSinging = Math.min(state.currentSinging + 1, state.queue.length);
-  updateHostMonitor();
-  if (document.getElementById('screen-queue').classList.contains('active')) renderQueue();
-}
-
-function copyLink() {
-  const link = 'https://' + document.getElementById('partyLinkDisplay').textContent;
-  navigator.clipboard.writeText(link).catch(() => {});
-  const btn = document.querySelector('[onclick="copyLink()"]');
-  const orig = btn.innerHTML;
-  btn.innerHTML = '<i class="ti ti-check"></i> Copiado!';
-  setTimeout(() => { btn.innerHTML = orig; }, 2000);
-}
-
-function resetParty() {
-  Object.assign(state, {
-    partyName:'', partyCode:'', queue:[], currentSinging:0,
-    myIndex:-1, myName:'', mySong:'', demoCount:0, qrGenerated:false,
-  });
-  document.getElementById('setup-section').style.display   = '';
-  document.getElementById('qr-section').style.display      = 'none';
-  document.getElementById('monitor-section').style.display = 'none';
-}
-
-/* ─── Queue helpers ─── */
-function addToQueue(name, song) {
-  state.queue.push({
-    name, song,
-    color: COLORS[state.queue.length % COLORS.length],
-    id: Date.now() + Math.random(),
-  });
-  updateHostMonitor();
-}
-
-function updateHostMonitor() {
-  const list  = document.getElementById('hostQueueList');
-  const count = document.getElementById('queueCount');
-  count.textContent = state.queue.length;
-
-  if (state.queue.length === 0) {
-    list.innerHTML = '<div class="empty-queue"><i class="ti ti-music-off"></i><br>Nenhum participante ainda.<br>Compartilhe o QR Code!</div>';
-    return;
-  }
-
-  list.innerHTML = state.queue.map((p, i) => {
-    const singing = i === state.currentSinging - 1;
-    const next    = i === state.currentSinging;
-    const cls     = singing ? 'singing' : next ? 'next' : '';
-    const tag     = singing
-      ? '<span class="status-tag singing">🎤 Cantando</span>'
-      : next ? '<span class="status-tag next">⚡ Próximo</span>' : '';
-
-    return `<div class="queue-item-mini ${cls}">
-      <span class="pos-badge ${cls}">${i + 1}</span>
-      <div class="item-info">
-        <div class="item-name">${p.name}</div>
-        <div class="item-song">${p.song}</div>
-      </div>
-      ${tag}
-    </div>`;
-  }).join('');
-}
-
-/* ─── Participant: join ─── */
-function joinQueue() {
-  const nameEl = document.getElementById('participantName');
-  const songEl = document.getElementById('participantSong');
-  const name   = nameEl.value.trim();
-  const song   = songEl.value.trim();
-
-  nameEl.style.borderColor = name ? '' : 'var(--accent)';
-  songEl.style.borderColor = song ? '' : 'var(--accent)';
-  if (!name || !song) return;
-
-  // Auto-bootstrap demo party if organiser hasn't created one yet
-  if (!state.qrGenerated) {
-    state.partyName    = 'Aniversário da Ana 🎉';
-    state.partyCode    = 'ANI25';
-    state.qrGenerated  = true;
-    document.getElementById('queuePartyBadge').textContent = state.partyName;
-
-    if (state.queue.length === 0) {
-      ['Carlos','Juliana','Roberto'].forEach((n, i) => addToQueue(n, SONGS_DEMO[i][1]));
-      state.currentSinging = 1;
-    }
-  }
-
-  state.myName = name;
-  state.mySong = song;
-  addToQueue(name, song);
-  state.myIndex = state.queue.length - 1;
-
-  showScreen('queue');
-  renderQueue();
-}
-
-/* ─── Participant: render queue ─── */
-function renderQueue() {
-  const list           = document.getElementById('mainQueueList');
-  const myPosDisplay   = document.getElementById('myPosDisplay');
-  const bottomName     = document.getElementById('bottomName');
-  const waitTimeDisplay = document.getElementById('waitTimeDisplay');
-  const myTurnBanner   = document.getElementById('myTurnBanner');
-  const nextBanner     = document.getElementById('nextBanner');
-
-  const q   = state.queue;
-  const cur = state.currentSinging;
-  const mi  = state.myIndex;
-
-  if (q.length === 0) {
-    list.innerHTML = '<div style="text-align:center;padding:48px 0;color:var(--muted)"><i class="ti ti-music-off" style="font-size:40px"></i><br><br>Fila vazia</div>';
-    return;
-  }
-
-  const isSinging = mi === cur - 1;
-  const isNext    = mi === cur;
-  const myPos     = mi - cur + 1;
-
-  myTurnBanner.classList.toggle('show', isSinging);
-  nextBanner.classList.toggle('show', isNext && !isSinging);
-
-  if (mi < 0) {
-    myPosDisplay.textContent   = '#–';
-    bottomName.textContent     = '–';
-    waitTimeDisplay.textContent = 'Você não está na fila';
-  } else if (isSinging) {
-    myPosDisplay.textContent   = '🎤';
-    bottomName.textContent     = state.myName;
-    waitTimeDisplay.textContent = 'Cantando agora!';
-  } else {
-    myPosDisplay.textContent   = '#' + Math.max(1, myPos);
-    bottomName.textContent     = state.myName + ' — ' + state.mySong;
-    const wait = Math.max(0, myPos - 1);
-    waitTimeDisplay.textContent = wait === 0 ? 'Próximo a cantar!' : `~${wait * 4} min de espera`;
-  }
-
-  list.innerHTML = q.map((p, i) => {
-    const singing = i === cur - 1;
-    const nextUp  = i === cur;
-    const isMe    = i === mi;
-    const isPast  = i < cur - 1;
-
-    let entryClass = '';
-    if (isMe && singing)       entryClass = 'is-singing is-me';
-    else if (singing)          entryClass = 'is-singing';
-    else if (isMe && nextUp)   entryClass = 'is-next is-me';
-    else if (nextUp)           entryClass = 'is-next';
-    else if (isMe)             entryClass = 'is-me';
-
-    const numClass   = singing ? 'singing' : nextUp ? 'next' : isMe ? 'me' : '';
-    const statusHtml = singing
-      ? '<span class="entry-status singing">🎤 Cantando</span>'
-      : nextUp ? '<span class="entry-status next">⚡ Próximo</span>' : '';
-    const meTag      = isMe ? '<div class="me-tag">Você</div>' : '';
-    const initials   = p.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
-    const opacity    = (isPast && !isMe) ? 'opacity:0.4' : '';
-
-    return `<div class="queue-entry ${entryClass}" style="${opacity}">
-      ${meTag}
-      <span class="entry-num ${numClass}">${i + 1}</span>
-      <div class="entry-avatar" style="background:${p.color}22;color:${p.color}">${initials}</div>
-      <div class="entry-details">
-        <div class="entry-name">${p.name}</div>
-        <div class="entry-song">🎵 ${p.song}</div>
-      </div>
-      ${statusHtml}
-    </div>`;
-  }).join('');
-
-  // Scroll participant's card into view
-  if (mi >= 0 && list.children[mi]) {
-    setTimeout(() => list.children[mi].scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
-  }
-}
-
-/* ─── Init ─── */
-if (checkAuth()) {
-  showScreen('host');
-} else {
-  showScreen('login');
-}
-
-
-/* shake anim added via JS */ 
-/* ===== AUTH ===== */
-
-const USERS = [
-  { user: 'admin',    pass: 'karaoke123', name: 'Administrador' },
-  { user: 'dj',       pass: 'festa2025',  name: 'DJ' },
-  { user: 'anfitriao',pass: 'vamoscantar',name: 'Anfitrião' },
-];
-
-let loggedUser = null;
-
-function hashPass(p) {
-  let h = 0;
-  for (let i = 0; i < p.length; i++) h = (Math.imul(31, h) + p.charCodeAt(i)) | 0;
-  return h.toString(16);
-}
-
-function checkAuth() {
-  const saved = sessionStorage.getItem('kl_auth');
-  if (saved) {
-    const u = USERS.find(x => x.user === saved);
-    if (u) { loggedUser = u; return true; }
-  }
-  return false;
-}
-
-function doLogin() {
-  var user = (document.getElementById('loginUser').value || '').trim().toLowerCase();
-  var pass = document.getElementById('loginPass').value || '';
-  var err  = document.getElementById('loginError');
-  var btn  = document.getElementById('loginBtn');
-  var found = null;
-  for (var i=0; i<USERS.length; i++) { if (USERS[i].user===user && USERS[i].pass===pass) { found=USERS[i]; break; } }
-  if (found) {
-    loggedUser = found;
-    sessionStorage.setItem('kl_auth', found.user);
-    err.style.display = 'none';
-    var nav = document.getElementById('navBar');
-    if (nav) nav.classList.remove('locked');
-    document.querySelectorAll('.screen').forEach(function(e){e.classList.remove('active');});
-    var host = document.getElementById('screen-host');
-    if (host) host.classList.add('active');
-    document.querySelectorAll('.nav-btn').forEach(function(b,i){b.classList.toggle('active',i===0);});
-    updateUserBadge();
-  } else {
-    err.textContent = 'Usuario ou senha incorretos.';
-    err.style.display = 'block';
-    document.getElementById('loginPass').value = '';
-    document.getElementById('loginPass').focus();
-  }
-}
-
-function doLogout() {
-  loggedUser = null;
-  sessionStorage.removeItem('kl_auth');
-  resetParty();
-  showScreen('login');
-}
-
-function updateUserBadge() {
-  const badge = document.getElementById('userBadge');
-  if (!badge || !loggedUser) return;
-  badge.innerHTML = `
-    <div class="user-avatar">${loggedUser.name[0]}</div>
-    <span>${loggedUser.name}</span>
-  `;
-}
-
-function togglePassword() {
-  var inp = document.getElementById('loginPass');
-  var ico = document.getElementById('toggleIcon');
-  if (!inp || !ico) return;
-  if (inp.type === 'password') {
-    inp.type = 'text';
-    ico.className = 'ti ti-eye-off';
-  } else {
-    inp.type = 'password';
-    ico.className = 'ti ti-eye';
-  }
-}
-
-  </script>
-  <script>
-    if('serviceWorker' in navigator){
-      window.addEventListener('load',function(){
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
         navigator.serviceWorker.register('sw.js');
       });
     }
   </script>
+  <script src="js/users.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
