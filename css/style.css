@@ -517,3 +517,28 @@ html, body {
   .btn-row { gap: 6px; }
   .btn-secondary { font-size: 12px; padding: 7px 10px; }
 }
+.site-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 40;
+}
+
+.footer-logo {
+  height: 32px;
+  border-radius: 6px;
+  opacity: 0.85;
+}
+
+.site-footer span {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
