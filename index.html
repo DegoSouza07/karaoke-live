@@ -3,173 +3,2170 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0d0d1a" />
+  <meta name="theme-color" content="#080810" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="KaraokeLive" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <title>KaraokeLive - Fila Inteligente</title>
+  <title>KaraokeLive — Fila Inteligente</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
-  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+/* ============================================================
+   RESET & TOKENS
+============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:        #080810;
+  --surface:   #0f0f1e;
+  --card:      #161628;
+  --card2:     #1c1c32;
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.12);
+  --red:       #ff3c6e;  --red-dim:    rgba(255,60,110,0.15);
+  --gold:      #ffb800;  --gold-dim:   rgba(255,184,0,0.15);
+  --teal:      #00e5c4;  --teal-dim:   rgba(0,229,196,0.12);
+  --purple:    #a78bfa;  --purple-dim: rgba(167,139,250,0.13);
+  --blue:      #60a5fa;  --blue-dim:   rgba(96,165,250,0.13);
+  --green:     #34d399;
+  --text:      #eeeaf8;  --muted: #6b6890; --subtle: #9994be;
+  --radius:    14px;     --radius-lg: 20px;
+  --font-t:    'Boogaloo', sans-serif;
+  --font-b:    'DM Sans', sans-serif;
+  --mode-bar:  #ff7c3a;
+  --mode-bday: #f472b6;
+  --mode-wed:  #a78bfa;
+  /* ADM accent — distinct from client accents */
+  --adm:       #00e5c4;
+  --adm-dim:   rgba(0,229,196,0.12);
+}
+html, body {
+  background: var(--bg); color: var(--text);
+  font-family: var(--font-b); min-height: 100vh;
+  font-size: 15px; line-height: 1.55; overscroll-behavior: none;
+}
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--red); border-radius: 4px; }
+
+/* ============================================================
+   SCREEN SYSTEM
+============================================================ */
+.screen { display: none; flex-direction: column; min-height: 100vh; }
+.screen.active { display: flex; }
+
+/* ============================================================
+   SHARED COMPONENTS
+============================================================ */
+.logo {
+  font-family: var(--font-t); font-size: 28px; letter-spacing: .5px;
+  background: linear-gradient(135deg, var(--red), var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.logo span { -webkit-text-fill-color: var(--teal); }
+.logo small { font-size: 13px; letter-spacing: 1px; -webkit-text-fill-color: var(--muted); }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 700; padding: 3px 10px;
+  border-radius: 20px; text-transform: uppercase; letter-spacing: .6px; white-space: nowrap;
+}
+.pill-teal   { background: var(--teal-dim);   color: var(--teal); }
+.pill-gold   { background: var(--gold-dim);   color: var(--gold); }
+.pill-red    { background: var(--red-dim);    color: var(--red); }
+.pill-blue   { background: var(--blue-dim);   color: var(--blue); }
+.pill-purple { background: var(--purple-dim); color: var(--purple); }
+
+.badge-active   { background: rgba(52,211,153,.15);  color: var(--green);  border: 1px solid rgba(52,211,153,.3);  }
+.badge-inactive { background: rgba(107,104,144,.15); color: var(--muted);  border: 1px solid rgba(107,104,144,.3); }
+.badge-suspended{ background: rgba(255,60,110,.15);  color: var(--red);    border: 1px solid rgba(255,60,110,.3);  }
+
+.btn-primary {
+  width: 100%; border: none; border-radius: var(--radius); color: #fff;
+  font-family: var(--font-t); font-size: 19px; letter-spacing: 1px; padding: 13px 16px;
+  cursor: pointer; transition: transform .15s, opacity .15s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: linear-gradient(135deg, var(--red), #b5003e);
+}
+.btn-primary:hover  { opacity: .92; transform: translateY(-1px); }
+.btn-primary:active { transform: scale(.98); }
+.btn-primary.adm    { background: linear-gradient(135deg, var(--teal), #00a88e); color: #061614; }
+.btn-primary.gold   { background: linear-gradient(135deg, var(--gold), #c48000); }
+.btn-primary.purple { background: linear-gradient(135deg, var(--purple), #6d28d9); }
+
+.btn-sm {
+  background: var(--card2); border: 1px solid var(--border2);
+  border-radius: 9px; color: var(--subtle); font-family: var(--font-b);
+  font-size: 12px; font-weight: 600; padding: 7px 12px;
+  cursor: pointer; transition: all .2s;
+  display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+}
+.btn-sm:hover          { border-color: var(--teal);   color: var(--teal); }
+.btn-sm.danger:hover   { border-color: var(--red);    color: var(--red); }
+.btn-sm.adm-btn:hover  { border-color: var(--adm);    color: var(--adm); }
+.btn-sm.suspend:hover  { border-color: var(--gold);   color: var(--gold); }
+
+.input-group { margin-bottom: 13px; }
+.input-group label {
+  display: block; font-size: 11px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
+}
+.input-group input,
+.input-group select,
+.input-group textarea {
+  width: 100%; background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 10px; color: var(--text); font-family: var(--font-b);
+  font-size: 14px; padding: 10px 14px; outline: none; transition: border-color .2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.input-group input:focus,
+.input-group select:focus { border-color: var(--red); }
+.input-group select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6890' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+  padding-right: 36px; cursor: pointer;
+}
+.input-icon { position: relative; }
+.input-icon i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 16px; pointer-events: none; }
+.input-icon input { padding-left: 38px !important; }
+.pw-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 4px; display: flex; align-items: center; transition: color .2s; }
+.pw-toggle:hover { color: var(--text); }
+.divider { width: 100%; height: 1px; background: var(--border); }
+
+.toggle { position: relative; display: inline-block; width: 42px; height: 24px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: var(--card2); border-radius: 12px; transition: .3s; border: 1px solid var(--border2); }
+.toggle-slider::before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: var(--muted); border-radius: 50%; transition: .3s; }
+.toggle input:checked + .toggle-slider { background: var(--teal); border-color: var(--teal); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(18px); background: #fff; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.setting-row label { font-size: 13px; color: var(--subtle); flex: 1; }
+.setting-input { width: 70px; background: var(--card); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: var(--font-b); font-size: 13px; padding: 5px 8px; text-align: center; outline: none; }
+.setting-input:focus { border-color: var(--red); }
+
+@keyframes floatUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse {
+  0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.65)}
+}
+
+/* ============================================================
+   LOGIN SCREEN  (shared, role-aware)
+============================================================ */
+#screen-login {
+  align-items: center; justify-content: center; padding: 24px 16px 80px;
+}
+.login-card {
+  background: var(--card); border: 1px solid var(--border2);
+  border-radius: 28px; padding: 36px 28px 28px;
+  width: 100%; max-width: 390px;
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+  animation: floatUp .5s cubic-bezier(.34,1.4,.64,1) both;
+  box-shadow: 0 24px 80px rgba(0,0,0,.55);
+}
+.login-icon {
+  width: 84px; height: 84px; border-radius: 24px;
+  background: linear-gradient(135deg, var(--red), #8a003d);
+  display: flex; align-items: center; justify-content: center; font-size: 38px;
+  animation: iconGlow 3s ease-in-out infinite;
+}
+@keyframes iconGlow {
+  0%,100%{ box-shadow: 0 12px 40px rgba(255,60,110,.35); }
+  50%    { box-shadow: 0 12px 60px rgba(255,60,110,.6); }
+}
+.login-brand {
+  font-family: var(--font-t); font-size: 32px; letter-spacing: 1px;
+  background: linear-gradient(135deg, var(--red), var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  text-align: center;
+}
+.login-brand span { -webkit-text-fill-color: var(--teal); }
+.login-tagline { font-size: 11px; color: var(--muted); text-align: center; letter-spacing: 2.5px; text-transform: uppercase; margin-top: -10px; }
+.login-form { width: 100%; }
+.login-error { background: rgba(255,60,110,.1); border: 1px solid rgba(255,60,110,.25); border-radius: 10px; color: var(--red); font-size: 13px; padding: 10px 14px; text-align: center; display: none; margin-bottom: 6px; }
+.login-error.show { display: block; }
+.login-footer { font-size: 11px; color: var(--muted); text-align: center; line-height: 1.8; }
+
+/* ============================================================
+   ADM SCREEN  (4Byte — master control)
+============================================================ */
+#screen-adm {
+  align-items: center; padding: 0 0 80px;
+}
+
+/* ADM Top Bar */
+.adm-topbar {
+  width: 100%; background: var(--surface);
+  border-bottom: 2px solid rgba(0,229,196,.2);
+  padding: 0 20px; display: flex; align-items: center; justify-content: space-between;
+  height: 58px; position: sticky; top: 0; z-index: 100; flex-shrink: 0;
+}
+.adm-brand {
+  display: flex; align-items: center; gap: 10px;
+}
+.adm-brand-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: linear-gradient(135deg, var(--teal), #00a88e);
+  display: flex; align-items: center; justify-content: center; font-size: 17px;
+}
+.adm-brand-name {
+  font-family: var(--font-t); font-size: 18px;
+  background: linear-gradient(135deg, var(--teal), #60efdd);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  letter-spacing: .5px;
+}
+.adm-brand-role {
+  font-size: 10px; font-weight: 700; color: var(--adm); text-transform: uppercase;
+  letter-spacing: 1.5px; opacity: .7;
+}
+.adm-topbar-right { display: flex; align-items: center; gap: 8px; }
+.adm-user-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--adm-dim); border: 1px solid rgba(0,229,196,.2);
+  border-radius: 20px; padding: 4px 12px 4px 6px;
+  font-size: 12px; font-weight: 600; color: var(--adm);
+}
+.adm-user-chip i { font-size: 15px; }
+
+/* ADM Body */
+.adm-body { width: 100%; max-width: 700px; padding: 20px 16px; display: flex; flex-direction: column; gap: 18px; }
+
+/* Stats strip */
+.adm-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+.adm-stat {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 12px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.adm-stat-num { font-family: var(--font-t); font-size: 28px; color: var(--teal); line-height: 1; }
+.adm-stat-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .8px; }
+
+/* Section headers */
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.section-title {
+  font-family: var(--font-t); font-size: 18px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-title.adm  { color: var(--teal); }
+.section-title.warn { color: var(--gold); }
+
+/* Client cards */
+.client-list { display: flex; flex-direction: column; gap: 10px; }
+.client-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px;
+  transition: border-color .2s;
+}
+.client-card:hover { border-color: var(--border2); }
+.client-card.suspended { opacity: .55; }
+.client-card-top { display: flex; align-items: flex-start; gap: 12px; }
+.client-avatar {
+  width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+}
+.client-avatar.bar  { background: rgba(255,124,58,.15); }
+.client-avatar.bday { background: rgba(244,114,182,.15); }
+.client-avatar.wed  { background: rgba(167,139,250,.15); }
+.client-info { flex: 1; min-width: 0; }
+.client-name { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.client-meta { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+.client-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+
+/* New client form */
+.new-client-form {
+  background: var(--card2); border: 1px solid rgba(0,229,196,.15);
+  border-radius: var(--radius-lg); padding: 20px;
+}
+.new-client-form h3 { font-family: var(--font-t); font-size: 17px; color: var(--teal); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media(max-width:480px){ .form-row { grid-template-columns: 1fr; } }
+
+/* Plan badges */
+.plan-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 8px;
+  border-radius: 20px; text-transform: uppercase; letter-spacing: .5px;
+}
+.plan-basic  { background: rgba(96,165,250,.15);  color: var(--blue); border: 1px solid rgba(96,165,250,.25); }
+.plan-pro    { background: rgba(255,184,0,.15);   color: var(--gold); border: 1px solid rgba(255,184,0,.25); }
+.plan-premium{ background: rgba(167,139,250,.15); color: var(--purple); border: 1px solid rgba(167,139,250,.25); }
+
+/* Logs section */
+.log-list { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
+.log-entry {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface); border-radius: 9px; padding: 8px 12px;
+  font-size: 12px;
+}
+.log-time { color: var(--muted); font-size: 11px; white-space: nowrap; flex-shrink: 0; }
+.log-msg  { color: var(--subtle); flex: 1; }
+.log-dot  { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* ============================================================
+   CLIENT SCREEN  (contratante)
+============================================================ */
+#screen-client {
+  align-items: center; padding: 0 0 80px;
+}
+
+/* Client Top Bar */
+.client-topbar {
+  width: 100%; background: var(--surface);
+  border-bottom: 2px solid rgba(255,60,110,.18);
+  padding: 0 20px; display: flex; align-items: center; justify-content: space-between;
+  height: 58px; position: sticky; top: 0; z-index: 100; flex-shrink: 0;
+}
+.client-topbar-brand { display: flex; align-items: center; gap: 10px; }
+.ct-logo-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: linear-gradient(135deg, var(--red), #8a003d);
+  display: flex; align-items: center; justify-content: center; font-size: 17px;
+}
+.ct-brand-name {
+  font-family: var(--font-t); font-size: 17px;
+  background: linear-gradient(135deg, var(--red), var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.ct-client-name { font-size: 11px; color: var(--muted); font-weight: 600; }
+.ct-topbar-right { display: flex; align-items: center; gap: 8px; }
+.ct-user-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--red-dim); border: 1px solid rgba(255,60,110,.2);
+  border-radius: 20px; padding: 4px 12px 4px 6px;
+  font-size: 12px; font-weight: 600; color: var(--red);
+}
+.ct-user-chip i { font-size: 15px; }
+
+/* Sub-navigation tabs */
+.ct-tabs {
+  width: 100%; background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; overflow-x: auto; scrollbar-width: none;
+}
+.ct-tabs::-webkit-scrollbar { display: none; }
+.ct-tab {
+  flex-shrink: 0; padding: 12px 18px;
+  font-size: 13px; font-weight: 600; color: var(--muted);
+  cursor: pointer; border-bottom: 2px solid transparent;
+  display: flex; align-items: center; gap: 6px; white-space: nowrap;
+  transition: all .2s; background: none; border-left: none; border-right: none; border-top: none;
+}
+.ct-tab:hover { color: var(--text); }
+.ct-tab.active { color: var(--red); border-bottom-color: var(--red); }
+
+/* Client body */
+.ct-body { width: 100%; max-width: 560px; padding: 18px 16px; display: flex; flex-direction: column; gap: 18px; }
+
+/* Tab panels */
+.ct-panel { display: none; flex-direction: column; gap: 14px; }
+.ct-panel.active { display: flex; }
+
+/* Minha conta card */
+.account-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 20px;
+}
+.account-card h3 { font-family: var(--font-t); font-size: 17px; color: var(--gold); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.account-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.account-row:last-child { border-bottom: none; }
+.account-row-label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .8px; }
+.account-row-value { font-size: 13px; color: var(--text); font-weight: 600; }
+
+/* Feat lock */
+.feature-lock {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(107,104,144,.08); border: 1px solid rgba(107,104,144,.15);
+  border-radius: 10px; padding: 11px 14px;
+}
+.feature-lock i { color: var(--muted); font-size: 18px; flex-shrink: 0; }
+.feature-lock-text { font-size: 12px; color: var(--muted); }
+.feature-lock-text strong { color: var(--subtle); display: block; margin-bottom: 2px; }
+
+/* Mode selector */
+.mode-selector { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.mode-btn {
+  background: var(--surface); border: 2px solid var(--border2);
+  border-radius: 12px; padding: 10px 8px;
+  cursor: pointer; transition: all .2s;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  text-align: center; position: relative;
+}
+.mode-btn .mode-icon  { font-size: 22px; }
+.mode-btn .mode-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; line-height: 1.2; }
+.mode-btn.active-bar  { border-color: var(--mode-bar);  background: rgba(255,124,58,.1);  }
+.mode-btn.active-bday { border-color: var(--mode-bday); background: rgba(244,114,182,.1); }
+.mode-btn.active-wed  { border-color: var(--mode-wed);  background: rgba(167,139,250,.1); }
+.mode-btn.active-bar  .mode-label { color: var(--mode-bar);  }
+.mode-btn.active-bday .mode-label { color: var(--mode-bday); }
+.mode-btn.active-wed  .mode-label { color: var(--mode-wed);  }
+.mode-btn.locked { opacity: .4; cursor: not-allowed; pointer-events: none; }
+.mode-btn .lock-overlay {
+  position: absolute; top: 4px; right: 4px;
+  background: rgba(0,0,0,.5); border-radius: 50%; width: 16px; height: 16px;
+  display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--muted);
+}
+
+/* Mode settings panel */
+.mode-settings {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px;
+  display: none; flex-direction: column; gap: 10px;
+}
+.mode-settings.show { display: flex; }
+.mode-settings-title {
+  font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; display: flex; align-items: center; gap: 6px; margin-bottom: 2px;
+}
+.mode-settings-title.bar  { color: var(--mode-bar); }
+.mode-settings-title.bday { color: var(--mode-bday); }
+.mode-settings-title.wed  { color: var(--mode-wed); }
+
+/* QR / festa */
+.qr-section {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 22px;
+  flex-direction: column; align-items: center; gap: 14px; display: none;
+}
+.qr-section.show { display: flex; }
+.qr-title { font-family: var(--font-t); font-size: 18px; color: var(--teal); display: flex; align-items: center; gap: 8px; }
+#qrCanvas { border-radius: 14px; background: #fff; padding: 10px; display: block; box-shadow: 0 8px 32px rgba(0,0,0,.4); }
+.party-code { font-family: var(--font-t); font-size: 32px; letter-spacing: 8px; color: var(--gold); background: var(--card2); padding: 10px 24px; border-radius: 12px; border: 2px dashed rgba(255,184,0,.3); }
+.party-link { font-size: 12px; color: var(--muted); text-align: center; word-break: break-all; max-width: 300px; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; width: 100%; }
+
+/* Monitor */
+.monitor { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+.monitor-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.monitor-title { font-family: var(--font-t); font-size: 18px; color: var(--red); }
+.live-badge { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--teal); }
+.pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); animation: pulse 1.4s ease-in-out infinite; }
+.monitor-legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.leg-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.queue-mini { display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto; padding-right: 2px; }
+.qitem { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: 10px; padding: 9px 12px; border-left: 3px solid transparent; transition: all .3s; }
+.qitem.singing { border-left-color: var(--teal); background: var(--teal-dim); }
+.qitem.next    { border-left-color: var(--gold);  background: var(--gold-dim); }
+.qitem-pos { font-family: var(--font-t); font-size: 16px; color: var(--muted); min-width: 22px; text-align: center; }
+.qitem-pos.singing { color: var(--teal); }
+.qitem-pos.next    { color: var(--gold); }
+.qitem-info { flex: 1; min-width: 0; }
+.qitem-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qitem-song { font-size: 11px; color: var(--muted); }
+.empty-msg { text-align: center; color: var(--muted); font-size: 13px; padding: 28px 0; line-height: 2.2; }
+
+/* DJ Panel */
+.dj-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+.dj-title { font-family: var(--font-t); font-size: 17px; color: var(--purple); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.dj-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dj-btn { border: none; border-radius: 12px; padding: 13px 10px; font-family: var(--font-t); font-size: 15px; letter-spacing: .5px; cursor: pointer; transition: all .2s; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.dj-btn i { font-size: 22px; }
+.dj-btn.next-btn  { background: linear-gradient(135deg, var(--teal),   #009e87); color: #081a17; }
+.dj-btn.skip-btn  { background: linear-gradient(135deg, var(--gold),   #c48000); color: #1a1000; }
+.dj-btn.pause-btn { background: linear-gradient(135deg, var(--purple), #5b21b6); color: #fff; }
+.dj-btn.pause-btn.paused { background: linear-gradient(135deg, var(--red), #8a003d); }
+.dj-btn.reject-btn{ background: linear-gradient(135deg, var(--red),   #8a003d); color: #fff; }
+.dj-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+.dj-btn:active{ transform: scale(.97); }
+.dj-status { margin-top: 10px; background: var(--surface); border-radius: 10px; padding: 9px 12px; font-size: 12px; color: var(--subtle); }
+.paused-banner { background: rgba(167,139,250,.1); border: 1px solid rgba(167,139,250,.25); border-radius: 10px; padding: 9px 14px; text-align: center; color: var(--purple); font-size: 13px; font-weight: 600; display: none; margin-bottom: 8px; }
+.paused-banner.show { display: block; }
+
+/* ============================================================
+   JOIN / QUEUE SCREENS  (unchanged from v1)
+============================================================ */
+#screen-join {
+  align-items: center; justify-content: center; padding: 24px 16px 100px; min-height: calc(100vh - 49px);
+}
+.join-card {
+  background: var(--card); border: 1px solid var(--border2); border-radius: 28px;
+  padding: 28px 24px; width: 100%; max-width: 400px;
+  display: flex; flex-direction: column; gap: 14px; align-items: center;
+  animation: floatUp .4s cubic-bezier(.34,1.4,.64,1) both;
+}
+.mic-icon { width: 66px; height: 66px; border-radius: 50%; background: linear-gradient(135deg, var(--red), #8a003d); display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 0 28px rgba(255,60,110,.4); }
+.join-title { font-family: var(--font-t); font-size: 27px; text-align: center; }
+.join-party-name { font-size: 14px; color: var(--teal); text-align: center; }
+.join-mode-label { font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: .8px; }
+.join-mode-label.bar  { background: rgba(255,124,58,.15); color: var(--mode-bar); }
+.join-mode-label.bday { background: rgba(244,114,182,.15); color: var(--mode-bday); }
+.join-mode-label.wed  { background: rgba(167,139,250,.15); color: var(--mode-wed); }
+.join-form { width: 100%; }
+.join-hint { font-size: 12px; color: var(--muted); text-align: center; }
+.limit-warning { background: rgba(255,184,0,.1); border: 1px solid rgba(255,184,0,.25); border-radius: 10px; color: var(--gold); font-size: 13px; padding: 10px 14px; text-align: center; display: none; }
+.limit-warning.show { display: block; }
+
+#screen-queue { min-height: 100vh; }
+.queue-topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; position: sticky; top: 0; z-index: 100; }
+.queue-topbar .logo { font-size: 18px; }
+.party-badge { font-family: var(--font-t); font-size: 13px; color: var(--teal); background: var(--teal-dim); padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(0,229,196,.2); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.my-turn-banner { background: linear-gradient(135deg, var(--red), #8a003d); padding: 13px 18px; text-align: center; font-family: var(--font-t); font-size: 21px; letter-spacing: 1px; animation: bannerPulse 1s ease-in-out infinite alternate; display: none; flex-shrink: 0; }
+.my-turn-banner.show { display: block; }
+@keyframes bannerPulse{ from{opacity:1}to{opacity:.75} }
+.next-up-banner { background: var(--gold-dim); border-bottom: 1px solid rgba(255,184,0,.2); padding: 9px 18px; text-align: center; font-size: 13px; color: var(--gold); font-weight: 600; display: none; flex-shrink: 0; }
+.next-up-banner.show { display: block; }
+.queue-paused-banner { background: rgba(167,139,250,.1); border-bottom: 1px solid rgba(167,139,250,.2); padding: 9px 18px; text-align: center; font-size: 13px; color: var(--purple); font-weight: 600; display: none; flex-shrink: 0; }
+.queue-paused-banner.show { display: block; }
+.hidden-queue-msg { display: flex; align-items: center; justify-content: center; flex: 1; flex-direction: column; gap: 12px; padding: 40px 20px; text-align: center; }
+.hidden-queue-msg i { font-size: 48px; color: var(--purple); }
+.hidden-queue-msg p { color: var(--subtle); font-size: 14px; }
+.queue-list { flex: 1; overflow-y: auto; padding: 14px 14px 120px; display: flex; flex-direction: column; gap: 9px; }
+.queue-entry { display: flex; align-items: center; gap: 11px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 11px 13px; transition: all .4s; position: relative; }
+.queue-entry.is-me      { border-color: var(--red);  background: var(--red-dim);  box-shadow: 0 0 20px rgba(255,60,110,.1); }
+.queue-entry.is-singing { border-color: var(--teal); background: var(--teal-dim); }
+.queue-entry.is-next    { border-color: var(--gold); background: var(--gold-dim); }
+.me-tag { position: absolute; top: 6px; right: 9px; font-size: 10px; font-weight: 700; color: var(--red); background: var(--red-dim); padding: 2px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: .5px; }
+.entry-num { font-family: var(--font-t); font-size: 20px; color: var(--muted); min-width: 28px; text-align: center; }
+.entry-num.s { color: var(--teal); } .entry-num.n { color: var(--gold); } .entry-num.m { color: var(--red); }
+.entry-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-t); font-size: 15px; flex-shrink: 0; }
+.entry-details { flex: 1; min-width: 0; }
+.entry-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.entry-song { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.entry-meta { font-size: 10px; color: var(--muted); margin-top: 1px; }
+.rotation-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; padding: 2px 7px; background: var(--blue-dim); color: var(--blue); border-radius: 20px; border: 1px solid rgba(96,165,250,.2); }
+.bottom-bar { position: fixed; bottom: 74px; left: 0; right: 0; background: rgba(15,15,30,.96); border-top: 1px solid var(--border); padding: 11px 15px; display: flex; align-items: center; gap: 11px; backdrop-filter: blur(12px); z-index: 50; }
+.my-pos-wrap { display: flex; flex-direction: column; flex-shrink: 0; }
+.my-pos-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .8px; }
+.my-pos-num { font-family: var(--font-t); font-size: 22px; color: var(--red); line-height: 1; }
+.bottom-details { flex: 1; min-width: 0; }
+.bottom-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wait-time { font-size: 11px; color: var(--muted); }
+
+/* ============================================================
+   PIX MODAL
+============================================================ */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: none; align-items: center; justify-content: center; z-index: 400; padding: 20px; }
+.modal-overlay.show { display: flex; }
+.modal { background: var(--card); border: 1px solid var(--border2); border-radius: 24px; padding: 28px 24px; width: 100%; max-width: 360px; animation: floatUp .35s cubic-bezier(.34,1.4,.64,1) both; }
+.modal-title { font-family: var(--font-t); font-size: 22px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.modal-body { color: var(--subtle); font-size: 13px; margin-bottom: 18px; line-height: 1.7; }
+.pix-amount-display { background: var(--surface); border-radius: 12px; padding: 14px; text-align: center; margin-bottom: 16px; }
+.pix-amount-display .amount { font-family: var(--font-t); font-size: 36px; color: var(--green); }
+.pix-amount-display .amount-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.modal-actions { display: flex; gap: 8px; }
+.modal-cancel { flex: 1; background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; color: var(--muted); font-family: var(--font-b); font-size: 14px; padding: 10px; cursor: pointer; transition: all .2s; }
+.modal-cancel:hover { border-color: var(--red); color: var(--red); }
+.modal-confirm { flex: 2; }
+
+/* ============================================================
+   TOAST
+============================================================ */
+.toast { position: fixed; top: 64px; left: 50%; transform: translateX(-50%) translateY(-20px); background: var(--card2); border: 1px solid var(--border2); border-radius: 12px; padding: 10px 18px; font-size: 13px; font-weight: 600; color: var(--text); box-shadow: 0 8px 32px rgba(0,0,0,.4); z-index: 300; opacity: 0; transition: all .3s; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.teal   { border-color: rgba(0,229,196,.3);   color: var(--teal); }
+.toast.gold   { border-color: rgba(255,184,0,.3);   color: var(--gold); }
+.toast.red    { border-color: rgba(255,60,110,.3);  color: var(--red); }
+.toast.purple { border-color: rgba(167,139,250,.3); color: var(--purple); }
+
+/* ============================================================
+   FOOTER
+============================================================ */
+.site-footer { display: flex; align-items: center; justify-content: center; padding: 0 20px; background: var(--surface); border-top: 1px solid var(--border); position: fixed; bottom: 0; left: 0; right: 0; z-index: 60; height: 74px; }
+.footer-logo { height: 62px; width: auto; max-width: 260px; object-fit: contain; border-radius: 4px; opacity: .8; transition: all .3s; }
+.footer-logo:hover { opacity: 1; filter: drop-shadow(0 0 10px var(--teal)); }
+/* ============================================================
+   COMANDO LAYOUT  (DJ + Fila na mesma tela)
+============================================================ */
+
+/* Widen the ct-body when on comando tab */
+#screen-client .ct-body { width: 100%; max-width: 560px; padding: 18px 16px; display: flex; flex-direction: column; gap: 18px; }
+#screen-client .ct-body:has(#tab-comando.active) { max-width: 900px; }
+
+.comando-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+@media (min-width: 700px) {
+  .comando-layout {
+    grid-template-columns: 300px 1fr;
+    align-items: start;
+  }
+}
+
+/* DJ column */
+.comando-dj {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 18px;
+  display: flex; flex-direction: column; gap: 12px;
+  position: sticky; top: 72px; /* stick below topbar */
+}
+.comando-dj-title {
+  font-family: var(--font-t); font-size: 17px; color: var(--purple);
+  display: flex; align-items: center; gap: 8px;
+}
+.comando-dj .dj-actions { grid-template-columns: 1fr 1fr; }
+
+/* Queue column */
+.comando-queue {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 18px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.comando-queue-title {
+  font-family: var(--font-t); font-size: 17px; color: var(--red);
+  display: flex; align-items: center; gap: 8px;
+}
+.comando-queue .queue-mini {
+  max-height: 420px;
+}
+
+/* On mobile, dj is not sticky */
+@media (max-width: 699px) {
+  .comando-dj { position: static; }
+  .comando-queue .queue-mini { max-height: 300px; }
+}
+/* ============================================================
+   WELCOME SCREEN  (participante chega pelo QR Code)
+============================================================ */
+#screen-welcome {
+  align-items: center; justify-content: center;
+  padding: 24px 16px 100px; min-height: 100vh;
+}
+.welcome-card {
+  background: var(--card); border: 1px solid var(--border2);
+  border-radius: 28px; padding: 36px 28px 32px;
+  width: 100%; max-width: 400px;
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+  animation: floatUp .5s cubic-bezier(.34,1.4,.64,1) both;
+  box-shadow: 0 24px 80px rgba(0,0,0,.55);
+  text-align: center;
+}
+.welcome-burst {
+  width: 90px; height: 90px; border-radius: 26px;
+  background: linear-gradient(135deg, var(--red), #8a003d);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 42px;
+  animation: iconGlow 3s ease-in-out infinite;
+}
+.welcome-party-name {
+  font-family: var(--font-t); font-size: 28px; letter-spacing: .5px;
+  background: linear-gradient(135deg, var(--red), var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  line-height: 1.2;
+}
+.welcome-sub {
+  font-size: 13px; color: var(--muted); margin-top: -8px;
+}
+.welcome-mode-pill {
+  font-size: 12px; font-weight: 700; padding: 5px 16px;
+  border-radius: 20px; text-transform: uppercase; letter-spacing: .8px;
+}
+.welcome-mode-pill.bar  { background: rgba(255,124,58,.15); color: var(--mode-bar); border: 1px solid rgba(255,124,58,.25); }
+.welcome-mode-pill.bday { background: rgba(244,114,182,.15); color: var(--mode-bday); border: 1px solid rgba(244,114,182,.25); }
+.welcome-mode-pill.wed  { background: rgba(167,139,250,.15); color: var(--mode-wed); border: 1px solid rgba(167,139,250,.25); }
+.welcome-info-row {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border-radius: 12px; padding: 11px 16px;
+  width: 100%; text-align: left;
+}
+.welcome-info-row i { color: var(--teal); font-size: 18px; flex-shrink: 0; }
+.welcome-info-text { font-size: 13px; color: var(--subtle); line-height: 1.5; }
+.welcome-info-text strong { color: var(--text); display: block; }
+.welcome-code-badge {
+  font-family: var(--font-t); font-size: 22px; letter-spacing: 5px;
+  color: var(--gold); background: var(--card2);
+  padding: 8px 20px; border-radius: 10px;
+  border: 1px dashed rgba(255,184,0,.3);
+}
+  </style>
 </head>
 <body>
 
-  <nav class="demo-nav locked" id="navBar">
-    <button class="nav-btn" onclick="showScreen('host')"><i class="ti ti-device-tv"></i> Organizador</button>
-    <button class="nav-btn" onclick="showScreen('join')"><i class="ti ti-qrcode"></i> Participante (Entrada)</button>
-    <button class="nav-btn" onclick="showScreen('queue')"><i class="ti ti-list-numbers"></i> Participante (Fila)</button>
-  </nav>
+<!-- Toast -->
+<div class="toast" id="toast"></div>
 
-  <!-- LOGIN -->
-  <div class="screen login-screen active" id="screen-login">
-    <div class="login-card">
-      <div class="login-logo-wrap">
-        <div class="login-logo-icon">&#127908;</div>
-        <div class="login-brand">Karaok<span>e</span>Live</div>
-        <p class="login-tagline">Fila Inteligente</p>
+<!-- PIX Modal -->
+<div class="modal-overlay" id="pixModal">
+  <div class="modal">
+    <div class="modal-title">🟢 Furar a Fila</div>
+    <div class="modal-body">Pague via Pix e suba posições na fila instantaneamente.</div>
+    <div class="pix-amount-display">
+      <div class="amount" id="pixAmount">R$ 5,00</div>
+      <div class="amount-label">para subir <span id="pixPositions">1</span> posição</div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closePixModal()">Cancelar</button>
+      <button class="btn-primary modal-confirm" onclick="confirmPix()" style="margin-top:0">
+        <i class="ti ti-brand-mastercard"></i> Pagar Pix
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     LOGIN SCREEN
+============================================================ -->
+<div class="screen" id="screen-login">
+  <div class="login-card">
+    <div class="login-icon">🎤</div>
+    <div class="login-brand">Karaok<span>e</span>Live</div>
+    <p class="login-tagline" id="loginTagline">Fila Inteligente v2</p>
+    <div class="divider"></div>
+    <div class="login-form">
+      <div class="input-group">
+        <label>Usuário</label>
+        <div class="input-icon">
+          <i class="ti ti-user"></i>
+          <input type="text" id="loginUser" placeholder="seu usuario"
+            onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()" />
+        </div>
       </div>
-      <div class="login-divider"></div>
-      <div class="login-form">
+      <div class="input-group">
+        <label>Senha</label>
+        <div class="input-icon">
+          <i class="ti ti-lock"></i>
+          <input type="password" id="loginPass" placeholder="sua senha"
+            onkeydown="if(event.key==='Enter')doLogin()" />
+          <button class="pw-toggle" onclick="togglePw()" type="button">
+            <i class="ti ti-eye" id="pwIcon"></i>
+          </button>
+        </div>
+      </div>
+      <div class="login-error" id="loginError"></div>
+      <button class="btn-primary" id="loginBtn" onclick="doLogin()">
+        <i class="ti ti-lock-open"></i> Entrar
+      </button>
+    </div>
+    <div class="login-footer" id="loginFooter">Acesso restrito ao organizador.<br>Participantes entram pelo QR Code da festa.</div>
+  </div>
+</div>
+
+<!-- ============================================================
+     ADM SCREEN  (4Byte — master panel)
+============================================================ -->
+<div class="screen" id="screen-adm">
+
+  <div class="adm-topbar">
+    <div class="adm-brand">
+      <div class="adm-brand-icon">⚙️</div>
+      <div>
+        <div class="adm-brand-name">4Byte ADM</div>
+        <div class="adm-brand-role">Painel Master</div>
+      </div>
+    </div>
+    <div class="adm-topbar-right">
+      <div class="adm-user-chip"><i class="ti ti-shield-check"></i> <span id="admUserName">Admin</span></div>
+      <button class="btn-sm danger" onclick="doLogout()"><i class="ti ti-logout"></i></button>
+    </div>
+  </div>
+
+  <div class="adm-body">
+
+    <!-- Stats -->
+    <div class="adm-stats">
+      <div class="adm-stat">
+        <div class="adm-stat-num" id="statTotal">3</div>
+        <div class="adm-stat-label">Clientes</div>
+      </div>
+      <div class="adm-stat">
+        <div class="adm-stat-num" id="statActive">2</div>
+        <div class="adm-stat-label">Ativos</div>
+      </div>
+      <div class="adm-stat">
+        <div class="adm-stat-num" id="statSuspended">1</div>
+        <div class="adm-stat-label">Suspensos</div>
+      </div>
+    </div>
+
+    <!-- Client list -->
+    <div>
+      <div class="section-header">
+        <div class="section-title adm"><i class="ti ti-users"></i> Clientes Cadastrados</div>
+        <button class="btn-sm adm-btn" onclick="toggleNewClientForm()">
+          <i class="ti ti-plus"></i> Novo
+        </button>
+      </div>
+      <div class="client-list" id="clientList"></div>
+    </div>
+
+    <!-- New client form -->
+    <div class="new-client-form" id="newClientForm" style="display:none">
+      <h3><i class="ti ti-user-plus"></i> Cadastrar Novo Cliente</h3>
+      <div class="form-row">
+        <div class="input-group" style="margin:0">
+          <label>Nome do Estabelecimento</label>
+          <input type="text" id="ncName" placeholder="Ex: Bar do João" />
+        </div>
+        <div class="input-group" style="margin:0">
+          <label>Responsável</label>
+          <input type="text" id="ncOwner" placeholder="Nome completo" />
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:10px">
+        <div class="input-group" style="margin:0">
+          <label>Login de acesso</label>
+          <input type="text" id="ncUser" placeholder="usuario_unico" />
+        </div>
+        <div class="input-group" style="margin:0">
+          <label>Senha inicial</label>
+          <input type="text" id="ncPass" placeholder="senha123" />
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:10px">
+        <div class="input-group" style="margin:0">
+          <label>Tipo de Evento</label>
+          <select id="ncType">
+            <option value="bar">🍺 Bar / Restaurante</option>
+            <option value="bday">🎂 Aniversário / Festa</option>
+            <option value="wed">💍 Casamento / Corporativo</option>
+          </select>
+        </div>
+        <div class="input-group" style="margin:0">
+          <label>Plano</label>
+          <select id="ncPlan">
+            <option value="basic">Basic</option>
+            <option value="pro">Pro</option>
+            <option value="premium">Premium</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:14px; display:flex; gap:8px">
+        <button class="btn-sm" onclick="toggleNewClientForm()"><i class="ti ti-x"></i> Cancelar</button>
+        <button class="btn-primary adm" style="margin-top:0" onclick="createClient()">
+          <i class="ti ti-check"></i> Criar Cliente
+        </button>
+      </div>
+    </div>
+
+    <!-- Activity log -->
+    <div>
+      <div class="section-header">
+        <div class="section-title warn"><i class="ti ti-activity"></i> Log de Atividades</div>
+      </div>
+      <div class="log-list" id="admLog"></div>
+    </div>
+
+  </div>
+</div><!-- /screen-adm -->
+
+<!-- ============================================================
+     CLIENT SCREEN  (contratante — scoped panel)
+============================================================ -->
+<div class="screen" id="screen-client">
+
+  <div class="client-topbar">
+    <div class="client-topbar-brand">
+      <div class="ct-logo-icon">🎤</div>
+      <div>
+        <div class="ct-brand-name">KaraokeLive</div>
+        <div class="ct-client-name" id="ctClientLabel">—</div>
+      </div>
+    </div>
+    <div class="ct-topbar-right">
+      <div class="ct-user-chip"><i class="ti ti-user"></i> <span id="ctUserName">—</span></div>
+      <button class="btn-sm danger" onclick="doLogout()"><i class="ti ti-logout"></i></button>
+    </div>
+  </div>
+
+  <!-- Sub-tabs -->
+  <div class="ct-tabs">
+    <button class="ct-tab active" onclick="showCtTab('tab-festa')" id="tab-btn-festa">
+      <i class="ti ti-confetti"></i> Configurar
+    </button>
+    <button class="ct-tab" onclick="showCtTab('tab-comando')" id="tab-btn-comando">
+      <i class="ti ti-device-gamepad-2"></i> Comandar Festa
+    </button>
+    <button class="ct-tab" onclick="showCtTab('tab-conta')" id="tab-btn-conta">
+      <i class="ti ti-id-badge"></i> Minha Conta
+    </button>
+  </div>
+
+  <div class="ct-body">
+
+    <!-- TAB: Minha Festa -->
+    <div class="ct-panel active" id="tab-festa">
+
+      <!-- Setup card -->
+      <div class="account-card" id="ctSetupCard">
+        <h3><i class="ti ti-confetti"></i> Configurar Festa</h3>
         <div class="input-group">
-          <label>Usuário</label>
-          <div class="input-icon-wrap">
-            <i class="ti ti-user"></i>
-            <input type="text" id="loginUser" placeholder="seu usuario"
-              onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()" />
-          </div>
+          <label>Nome da Festa</label>
+          <input type="text" id="partyName" placeholder="Ex: Aniversário da Ana" value="Aniversário da Ana" />
         </div>
         <div class="input-group">
-          <label>Senha</label>
-          <div class="input-icon-wrap">
-            <i class="ti ti-lock"></i>
-            <input type="password" id="loginPass" placeholder="sua senha"
-              onkeydown="if(event.key==='Enter')doLogin()" />
-            <button class="password-toggle" onclick="togglePassword()" type="button">
-              <i class="ti ti-eye" id="toggleIcon"></i>
+          <label>Local (opcional)</label>
+          <input type="text" id="partyPlace" placeholder="Ex: Salão do Clube" value="Salão do Clube" />
+        </div>
+
+        <div class="input-group">
+          <label>Tipo de Evento</label>
+          <div class="mode-selector" id="modeSelector">
+            <button class="mode-btn" onclick="selectMode('bar')" id="modeBtn-bar">
+              <span class="mode-icon">🍺</span>
+              <span class="mode-label">Bar</span>
+            </button>
+            <button class="mode-btn" onclick="selectMode('bday')" id="modeBtn-bday">
+              <span class="mode-icon">🎂</span>
+              <span class="mode-label">Festa</span>
+            </button>
+            <button class="mode-btn" onclick="selectMode('wed')" id="modeBtn-wed">
+              <span class="mode-icon">💍</span>
+              <span class="mode-label">Casamento</span>
             </button>
           </div>
+          <div id="modeLockedNote" style="font-size:11px;color:var(--muted);margin-top:6px;display:none">
+            <i class="ti ti-lock" style="font-size:12px"></i> Modo bloqueado pelo seu plano. Contate a 4Byte para upgrade.
+          </div>
         </div>
-        <div class="login-error" id="loginError"></div>
-        <button class="btn-primary" id="loginBtn" onclick="doLogin()">
-          <i class="ti ti-lock-open"></i> Entrar
+
+        <!-- Bar settings -->
+        <div class="mode-settings" id="settings-bar">
+          <div class="mode-settings-title bar"><i class="ti ti-building-store"></i> Config. Bar</div>
+          <div class="setting-row"><label>Entrada por Mesa/Comanda</label><label class="toggle"><input type="checkbox" id="tog-mesa" checked /><span class="toggle-slider"></span></label></div>
+          <div class="setting-row"><label>Rotação Justa</label><label class="toggle"><input type="checkbox" id="tog-rotation" checked /><span class="toggle-slider"></span></label></div>
+          <div class="setting-row"><label>Furar Fila via Pix</label><label class="toggle"><input type="checkbox" id="tog-pix" checked /><span class="toggle-slider"></span></label></div>
+          <div class="setting-row"><label>Valor por posição (R$)</label><input type="number" class="setting-input" id="pixValue" value="5" min="1" max="50" /></div>
+        </div>
+
+        <!-- Birthday settings -->
+        <div class="mode-settings" id="settings-bday">
+          <div class="mode-settings-title bday"><i class="ti ti-cake"></i> Config. Festa</div>
+          <div class="setting-row"><label>Limite de músicas por pessoa</label><input type="number" class="setting-input" id="songLimit" value="2" min="1" max="10" /></div>
+          <div class="setting-row"><label>Rotação Justa</label><label class="toggle"><input type="checkbox" id="tog-rotation-bday" checked /><span class="toggle-slider"></span></label></div>
+        </div>
+
+        <!-- Wedding settings -->
+        <div class="mode-settings" id="settings-wed">
+          <div class="mode-settings-title wed"><i class="ti ti-rings"></i> Config. Casamento</div>
+          <div class="setting-row"><label>Fila Oculta (surpresa)</label><label class="toggle"><input type="checkbox" id="tog-hidden" checked /><span class="toggle-slider"></span></label></div>
+          <div class="setting-row"><label>Limite de músicas por pessoa</label><input type="number" class="setting-input" id="wedSongLimit" value="1" min="1" max="5" /></div>
+        </div>
+
+        <div class="setting-row" style="margin-bottom:14px">
+          <label style="font-size:12px;color:var(--subtle);font-weight:400;text-transform:none;letter-spacing:0">Permitir Duetos</label>
+          <label class="toggle"><input type="checkbox" id="tog-duet" checked /><span class="toggle-slider"></span></label>
+        </div>
+
+        <button class="btn-primary" onclick="generateParty()">
+          <i class="ti ti-qrcode"></i> Gerar QR Code da Festa
         </button>
       </div>
-      <div class="login-footer">
-        Acesso restrito ao organizador.<br>
-        Participantes entram pelo QR Code da festa.
+
+      <!-- QR Section -->
+      <div class="qr-section" id="qrSection">
+        <div class="qr-title"><i class="ti ti-qrcode"></i> QR Code da Festa</div>
+        <div id="qrCanvas" style="border-radius:14px;background:#fff;padding:10px;display:inline-block;box-shadow:0 8px 32px rgba(0,0,0,.4);line-height:0"></div>
+        <div class="party-code" id="partyCodeDisplay">-----</div>
+        <div id="modeBadgeDisplay"></div>
+        <div class="party-link" id="partyLinkDisplay"></div>
+        <div class="btn-row">
+          <button class="btn-sm" onclick="copyLink()"><i class="ti ti-copy"></i> Copiar link</button>
+          <button class="btn-sm" onclick="simJoin()"><i class="ti ti-user-plus"></i> Simular</button>
+          <button class="btn-sm" onclick="advanceQueue()"><i class="ti ti-player-skip-forward"></i> Próximo</button>
+          <button class="btn-sm danger" onclick="resetParty()"><i class="ti ti-refresh"></i> Nova festa</button>
+        </div>
+      </div>
+
+    </div><!-- /tab-festa -->
+
+    <!-- TAB: Comandar Festa (Fila + DJ unificados) -->
+    <div class="ct-panel" id="tab-comando">
+
+      <!-- Paused global banner -->
+      <div class="paused-banner" id="hostPausedBanner">⏸ Fila Pausada pelo DJ</div>
+
+      <!-- Command layout: DJ buttons on top, queue below -->
+      <div class="comando-layout">
+
+        <!-- DJ Quick Actions -->
+        <div class="comando-dj">
+          <div class="comando-dj-title">
+            <i class="ti ti-headphones"></i> Controles
+            <div class="live-badge" style="margin-left:auto"><span class="pulse"></span><span id="queueCount">0</span> na fila</div>
+          </div>
+          <div class="paused-banner" id="djPausedBanner">⏸ Modo Anúncio Ativo</div>
+          <div class="dj-actions">
+            <button class="dj-btn next-btn" onclick="advanceQueue()">
+              <i class="ti ti-player-skip-forward"></i> Chamar Próximo
+            </button>
+            <button class="dj-btn skip-btn" onclick="skipCurrent()">
+              <i class="ti ti-user-x"></i> Passar a Vez
+            </button>
+            <button class="dj-btn pause-btn" id="djPauseBtn" onclick="togglePause()">
+              <i class="ti ti-player-pause"></i> Pausar Fila
+            </button>
+            <button class="dj-btn reject-btn" onclick="rejectTop()">
+              <i class="ti ti-x"></i> Remover Topo
+            </button>
+          </div>
+          <div class="dj-status" id="djStatus">— Nenhuma ação recente —</div>
+        </div>
+
+        <!-- Live Queue -->
+        <div class="comando-queue">
+          <div class="comando-queue-title">
+            <i class="ti ti-list-numbers"></i> Fila ao Vivo
+          </div>
+          <div class="monitor-legend">
+            <div class="leg"><span class="leg-dot" style="background:var(--teal)"></span> Cantando</div>
+            <div class="leg"><span class="leg-dot" style="background:var(--gold)"></span> Próximo</div>
+            <div class="leg"><span class="leg-dot" style="background:var(--muted)"></span> Aguardando</div>
+          </div>
+          <div class="queue-mini" id="hostQueueList">
+            <div class="empty-msg"><i class="ti ti-music-off"></i><br>Nenhum participante ainda.<br>Compartilhe o QR Code!</div>
+          </div>
+        </div>
+
+      </div><!-- /comando-layout -->
+
+      <!-- Sim join shortcut while on this tab -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-sm" onclick="simJoin()"><i class="ti ti-user-plus"></i> Simular entrada</button>
+        <button class="btn-sm" onclick="showCtTab('tab-festa')"><i class="ti ti-qrcode"></i> Ver QR Code</button>
+      </div>
+
+    </div><!-- /tab-comando -->
+
+    <!-- TAB: Minha Conta -->
+    <div class="ct-panel" id="tab-conta">
+      <div class="account-card">
+        <h3><i class="ti ti-id-badge"></i> Minha Conta</h3>
+        <div class="account-row">
+          <span class="account-row-label">Estabelecimento</span>
+          <span class="account-row-value" id="acctName">—</span>
+        </div>
+        <div class="account-row">
+          <span class="account-row-label">Responsável</span>
+          <span class="account-row-value" id="acctOwner">—</span>
+        </div>
+        <div class="account-row">
+          <span class="account-row-label">Usuário</span>
+          <span class="account-row-value" id="acctUser">—</span>
+        </div>
+        <div class="account-row">
+          <span class="account-row-label">Plano</span>
+          <span class="account-row-value" id="acctPlan">—</span>
+        </div>
+        <div class="account-row">
+          <span class="account-row-label">Tipo de Evento</span>
+          <span class="account-row-value" id="acctType">—</span>
+        </div>
+        <div class="account-row">
+          <span class="account-row-label">Status</span>
+          <span class="account-row-value" id="acctStatus">—</span>
+        </div>
+        <div class="account-row">
+          <span class="account-row-label">Modos Liberados</span>
+          <span class="account-row-value" id="acctModes">—</span>
+        </div>
+      </div>
+
+      <!-- Feature unlock info by plan -->
+      <div id="planFeatures"></div>
+
+      <div style="text-align:center;padding:8px 0">
+        <button class="btn-sm danger" onclick="doLogout()"><i class="ti ti-logout"></i> Sair da conta</button>
+      </div>
+    </div><!-- /tab-conta -->
+
+  </div>
+</div><!-- /screen-client -->
+
+<!-- ============================================================
+     WELCOME SCREEN  (participante chega pelo QR Code)
+============================================================ -->
+<div class="screen" id="screen-welcome">
+  <div class="welcome-card">
+    <div class="welcome-burst">🎤</div>
+    <div>
+      <div class="welcome-party-name" id="welcomePartyName">KaraokeLive</div>
+      <div class="welcome-sub" id="welcomePartyPlace"></div>
+    </div>
+    <div class="welcome-mode-pill bar" id="welcomeModePill">🍺 Bar / Restaurante</div>
+    <div class="divider"></div>
+    <div class="welcome-info-row">
+      <i class="ti ti-users"></i>
+      <div class="welcome-info-text">
+        <strong id="welcomeQueueInfo">— na fila agora</strong>
+        Junte-se e acompanhe sua posição em tempo real!
       </div>
     </div>
+    <div class="welcome-info-row">
+      <i class="ti ti-clock"></i>
+      <div class="welcome-info-text">
+        <strong id="welcomeWaitInfo">Seja o primeiro a entrar!</strong>
+        Média de ~4 min por cantor
+      </div>
+    </div>
+    <div class="welcome-code-badge" id="welcomeCodeBadge">-----</div>
+    <button class="btn-primary" onclick="showScreen('join')" style="margin-top:4px">
+      <i class="ti ti-microphone"></i> Quero Cantar!
+    </button>
+    <p style="font-size:11px;color:var(--muted)">Ao entrar você poderá acompanhar a fila em tempo real.</p>
   </div>
+</div>
 
-  <!-- ORGANIZADOR -->
-  <div class="screen host-screen" id="screen-host">
-    <div id="setup-section" class="host-card">
-      <h2><i class="ti ti-confetti"></i> Nova Festa</h2>
-      <div class="input-group">
-        <label>Nome da Festa</label>
-        <input type="text" id="partyName" placeholder="Ex: Aniversario da Ana" value="Aniversario da Ana" />
+<!-- ============================================================
+     JOIN SCREEN
+============================================================ -->
+<div class="screen" id="screen-join">
+  <div class="join-card">
+    <div class="mic-icon">🎤</div>
+    <div class="join-title">Hora de cantar!</div>
+    <div class="join-party-name" id="joinPartyLabel">Festa: KaraokeLive</div>
+    <div class="join-mode-label bar" id="joinModeLabel">🍺 Bar</div>
+    <div class="divider"></div>
+    <div class="join-form">
+      <div class="input-group" id="mesaField" style="display:none">
+        <label>Número da Mesa / Comanda</label>
+        <input type="text" id="participantMesa" placeholder="Ex: Mesa 7" />
       </div>
       <div class="input-group">
-        <label>Local / Endereço (opcional)</label>
-        <input type="text" id="partyPlace" placeholder="Ex: Salao do Clube" value="Salao do Clube" />
+        <label>Seu nome</label>
+        <input type="text" id="participantName" placeholder="Como te chamamos?" />
       </div>
-      <button class="btn-primary" onclick="generateParty()">
-        <i class="ti ti-qrcode"></i> Gerar QR Code da Festa
+      <div class="input-group">
+        <label>Música escolhida</label>
+        <input type="text" id="participantSong" placeholder="Nome da música e artista" />
+      </div>
+      <div class="input-group" id="duetField" style="display:none">
+        <label>Parceiro de Dueto (opcional)</label>
+        <input type="text" id="participantDuet" placeholder="Nome do parceiro" />
+      </div>
+      <div class="limit-warning" id="limitWarning"></div>
+      <button class="btn-primary" onclick="joinQueue()">
+        <i class="ti ti-arrow-right"></i> Entrar na fila
       </button>
-      <div style="margin-top:16px;text-align:right">
-        <button class="btn-secondary btn-danger" onclick="doLogout()"><i class="ti ti-logout"></i> Sair</button>
-      </div>
     </div>
-    <div id="qr-section" class="qr-wrapper" style="display:none;">
-      <h3><i class="ti ti-qrcode"></i> QR Code da Festa</h3>
-      <canvas id="qrCanvas" width="200" height="200"></canvas>
-      <div class="party-code" id="partyCodeDisplay">----</div>
-      <div class="party-link" id="partyLinkDisplay"></div>
-      <div class="btn-row">
-        <button class="btn-secondary" onclick="copyLink()"><i class="ti ti-copy"></i> Copiar link</button>
-        <button class="btn-secondary" onclick="simJoin()"><i class="ti ti-user-plus"></i> Simular entrada</button>
-        <button class="btn-secondary" onclick="advanceQueue()"><i class="ti ti-player-skip-forward"></i> Próximo</button>
-        <button class="btn-secondary btn-danger" onclick="resetParty()"><i class="ti ti-refresh"></i> Nova festa</button>
-      </div>
-    </div>
-    <div id="monitor-section" class="live-monitor" style="display:none;">
-      <h2>
-        <span>Fila ao vivo</span>
-        <span><span class="pulse-dot"></span> <span id="queueCount">0</span> na fila</span>
-      </h2>
-      <div class="legend">
-        <div class="legend-item"><span class="color-dot teal"></span> Cantando</div>
-        <div class="legend-item"><span class="color-dot yellow"></span> Próximo</div>
-        <div class="legend-item"><span class="color-dot gray"></span> Aguardando</div>
-      </div>
-      <div class="queue-mini" id="hostQueueList">
-        <div class="empty-queue"><i class="ti ti-music-off"></i><br>Nenhum participante ainda.<br>Compartilhe o QR Code!</div>
-      </div>
-    </div>
+    <p class="join-hint">Acompanhe sua posição em tempo real após entrar.</p>
   </div>
+</div>
 
-  <!-- PARTICIPANTE ENTRADA -->
-  <div class="screen join-screen" id="screen-join">
-    <div class="join-card">
-      <div class="mic-icon">&#127908;</div>
-      <div class="join-title">Hora de cantar!</div>
-      <div class="join-party-name" id="joinPartyLabel">Festa: KaraokeLive</div>
-      <div class="divider"></div>
-      <div class="join-form">
-        <div class="input-group">
-          <label>Seu nome</label>
-          <input type="text" id="participantName" placeholder="Como te chamamos?" />
-        </div>
-        <div class="input-group">
-          <label>Música escolhida</label>
-          <input type="text" id="participantSong" placeholder="Nome da musica e artista" />
-        </div>
-        <button class="btn-primary" onclick="joinQueue()">
-          <i class="ti ti-arrow-right"></i> Entrar na fila
-        </button>
-      </div>
-      <p class="join-hint">Você poderá acompanhar sua posição em tempo real após entrar.</p>
-    </div>
+<!-- ============================================================
+     QUEUE SCREEN
+============================================================ -->
+<div class="screen" id="screen-queue">
+  <div class="queue-topbar">
+    <div class="logo">🎤 KL<small>ive</small></div>
+    <div class="party-badge" id="queuePartyBadge">Festa</div>
   </div>
-
-  <!-- FILA -->
-  <div class="screen queue-screen" id="screen-queue">
-    <div class="queue-header">
-      <div class="logo">&#127908; KaraokeLive</div>
-      <div class="party-badge" id="queuePartyBadge">Festa</div>
-    </div>
-    <div class="my-turn-banner" id="myTurnBanner">&#127908; É A SUA VEZ! Vai lá!</div>
-    <div class="next-banner" id="nextBanner">Você é o próximo! Prepare-se!</div>
-    <div class="queue-list" id="mainQueueList"></div>
-    <div class="bottom-bar">
-      <div class="my-position-info">
-        <span class="my-pos-label">Sua posição</span>
-        <span class="my-pos-num" id="myPosDisplay">#-</span>
-      </div>
-      <div class="bottom-details">
-        <div class="bottom-name" id="bottomName">-</div>
-        <div class="wait-time" id="waitTimeDisplay">Aguardando...</div>
-      </div>
-      <button class="btn-secondary" onclick="showScreen('host')"><i class="ti ti-home"></i></button>
-    </div>
+  <div class="my-turn-banner" id="myTurnBanner">🎤 É A SUA VEZ! Vai lá!</div>
+  <div class="next-up-banner" id="nextUpBanner">Você é o próximo! Prepare-se! ⚡</div>
+  <div class="queue-paused-banner" id="queuePausedBanner">⏸ Fila pausada pelo DJ — aguarde</div>
+  <div class="hidden-queue-msg" id="hiddenQueueMsg" style="display:none">
+    <i class="ti ti-eye-off"></i>
+    <div class="logo" style="font-size:20px">Fila Surpresa</div>
+    <p>O organizador escolheu manter a fila oculta.<br>Você será chamado quando for a sua vez!</p>
+    <div id="hiddenMyPos" style="font-family:var(--font-t);font-size:22px;color:var(--purple)"></div>
   </div>
+  <div class="queue-list" id="mainQueueList"></div>
+  <div class="bottom-bar">
+    <div class="my-pos-wrap">
+      <span class="my-pos-label">Posição</span>
+      <span class="my-pos-num" id="myPosDisplay">#—</span>
+    </div>
+    <div class="bottom-details">
+      <div class="bottom-name" id="bottomName">—</div>
+      <div class="wait-time" id="waitTimeDisplay">Aguardando...</div>
+    </div>
+    <button class="btn-sm" onclick="openPixModal()" id="pixFureBtn" style="display:none">
+      <i class="ti ti-coin"></i> Furar
+    </button>
+    <button class="btn-sm" onclick="showScreen('join')"><i class="ti ti-home"></i></button>
+  </div>
+</div>
 
-  <!-- RODAPÉ -->
-  <footer class="site-footer">
-    <img src="Byte.png" alt="4Byte Team" class="footer-logo" />
-  </footer>
+<!-- Footer -->
+<footer class="site-footer">
+  <img src="Byte.png" alt="4Byte Team" class="footer-logo" />
+</footer>
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function () {
-        navigator.serviceWorker.register('sw.js');
-      });
+<script>
+/* ============================================================
+   DATA — USERS & CLIENTS
+============================================================
+   Roles:
+     'adm'    → 4Byte master admin
+     'client' → contratante (bar/bday/wed)
+   
+   Plans control which modes are unlocked:
+     basic   → only the contracted mode
+     pro     → contracted mode + 1 extra
+     premium → all modes
+============================================================ */
+
+const PLAN_MODES = {
+  basic:   1,   // only their own mode
+  pro:     2,   // their mode + 1 extra
+  premium: 3,   // all 3 modes
+};
+
+const PLAN_LABELS = {
+  basic:   'Basic',
+  pro:     'Pro',
+  premium: 'Premium',
+};
+
+const MODE_LABELS = {
+  bar:  { icon:'🍺', label:'Bar / Restaurante',    color:'var(--mode-bar)' },
+  bday: { icon:'🎂', label:'Aniversário / Festa',   color:'var(--mode-bday)' },
+  wed:  { icon:'💍', label:'Casamento / Corporativo', color:'var(--mode-wed)' },
+};
+
+// ADM users (4Byte internal)
+const ADM_USERS = [
+  { user: 'admin', pass: 'Byte4team', name: 'Administrador', role: 'adm' },
+  { user: 'suporte', pass: 'Byte4team', name: 'Suporte',     role: 'adm' },
+];
+
+// Clients database (managed by ADM)
+// status: 'active' | 'suspended'
+let CLIENTS = [
+  {
+    id: 'c001', user: 'bardojoao', pass: 'bar123', name: 'Bar do João',
+    owner: 'João Ferreira', type: 'bar', plan: 'pro', status: 'active',
+    role: 'client', createdAt: '2025-01-10',
+  },
+  {
+    id: 'c002', user: 'aniversarioana', pass: 'ana456', name: 'Aniversário da Ana',
+    owner: 'Ana Paula', type: 'bday', plan: 'basic', status: 'active',
+    role: 'client', createdAt: '2025-06-01',
+  },
+  {
+    id: 'c003', user: 'casamentolima', pass: 'wed789', name: 'Casamento Lima & Silva',
+    owner: 'Carlos Lima', type: 'wed', plan: 'premium', status: 'suspended',
+    role: 'client', createdAt: '2025-05-20',
+  },
+];
+
+let ADM_LOG = [
+  { time: '14:32', msg: 'Cliente Bar do João ativado', color: 'var(--teal)' },
+  { time: '13:10', msg: 'Novo cliente cadastrado: Aniversário da Ana', color: 'var(--gold)' },
+  { time: '11:55', msg: 'Cliente Casamento Lima & Silva suspenso', color: 'var(--red)' },
+];
+
+const COLORS = ['#ff3c6e','#ffb800','#00e5c4','#a78bfa','#fb923c','#34d399','#60a5fa','#f472b6','#e879f9','#38bdf8'];
+const SONGS_DEMO = [
+  ['Carlos','Evidências — Chitãozinho & Xororó'],
+  ['Juliana','Bohemian Rhapsody — Queen'],
+  ['Roberto','Ai Se Eu Te Pego — Michel Teló'],
+  ['Fernanda','Shallow — Lady Gaga'],
+  ['Marcos','Garota de Ipanema — Tom Jobim'],
+  ['Larissa','Rolling in the Deep — Adele'],
+  ['Paulo','Você Não Vale Nada — Gusttavo Lima'],
+  ['Taís','My Way — Frank Sinatra'],
+  ['Diego','Evidências — Robson Viola','Ana'],
+];
+
+const state = {
+  partyName:'', partyCode:'', queue:[], currentSinging:0,
+  myIndex:-1, myName:'', mySong:'',
+  demoCount:0, qrGenerated:false,
+  mode:'bar', paused:false,
+  settings:{ mesa:true, rotation:true, pix:true, pixValue:5, songLimit:0, hidden:false, duet:true },
+  singCount:{}, personSongs:{},
+};
+
+let loggedUser = null;   // ADM_USERS entry
+let loggedClient = null; // CLIENTS entry
+
+/* ============================================================
+   AUTH
+============================================================ */
+function checkAuth() {
+  const s = sessionStorage.getItem('kl_auth');
+  const r = sessionStorage.getItem('kl_role');
+  if (!s) return false;
+  if (r === 'adm') {
+    const f = ADM_USERS.find(u => u.user === s);
+    if (f) { loggedUser = f; return 'adm'; }
+  }
+  if (r === 'client') {
+    const f = CLIENTS.find(u => u.user === s);
+    if (f) { loggedClient = f; return 'client'; }
+  }
+  return false;
+}
+
+function doLogin() {
+  const user  = document.getElementById('loginUser').value.trim().toLowerCase();
+  const pass  = document.getElementById('loginPass').value;
+  const err   = document.getElementById('loginError');
+  err.classList.remove('show');
+
+  // Check ADM first
+  const adm = ADM_USERS.find(u => u.user === user && u.pass === pass);
+  if (adm) {
+    loggedUser = adm;
+    sessionStorage.setItem('kl_auth', adm.user);
+    sessionStorage.setItem('kl_role', 'adm');
+    showScreen('adm');
+    renderAdmPanel();
+    return;
+  }
+
+  // Check clients
+  const client = CLIENTS.find(u => u.user === user && u.pass === pass);
+  if (client) {
+    if (client.status === 'suspended') {
+      err.textContent = 'Conta suspensa. Entre em contato com a 4Byte.';
+      err.classList.add('show'); return;
     }
-  </script>
-  <script src="js/app.js"></script>
+    loggedClient = client;
+    sessionStorage.setItem('kl_auth', client.user);
+    sessionStorage.setItem('kl_role', 'client');
+    showScreen('client');
+    setupClientPanel();
+    return;
+  }
+
+  err.textContent = 'Usuário ou senha incorretos.';
+  err.classList.add('show');
+}
+
+function doLogout() {
+  loggedUser = null; loggedClient = null;
+  sessionStorage.removeItem('kl_auth');
+  sessionStorage.removeItem('kl_role');
+  showScreen('login');
+}
+
+function togglePw() {
+  const i = document.getElementById('loginPass');
+  const ic = document.getElementById('pwIcon');
+  i.type = i.type === 'password' ? 'text' : 'password';
+  ic.className = i.type === 'password' ? 'ti ti-eye' : 'ti ti-eye-off';
+}
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+function showScreen(s) {
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+  document.getElementById('screen-' + s).classList.add('active');
+}
+
+function showCtTab(tabId) {
+  document.querySelectorAll('.ct-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.ct-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  // derive button id: tab-festa -> tab-btn-festa, tab-comando -> tab-btn-comando
+  const btnId = 'tab-btn-' + tabId.replace('tab-', '');
+  const btn = document.getElementById(btnId);
+  if (btn) btn.classList.add('active');
+}
+
+/* ============================================================
+   ADM PANEL
+============================================================ */
+function renderAdmPanel() {
+  document.getElementById('admUserName').textContent = loggedUser.name;
+  renderClientList();
+  renderAdmLog();
+  updateAdmStats();
+}
+
+function updateAdmStats() {
+  const total     = CLIENTS.length;
+  const active    = CLIENTS.filter(c => c.status === 'active').length;
+  const suspended = CLIENTS.filter(c => c.status === 'suspended').length;
+  document.getElementById('statTotal').textContent     = total;
+  document.getElementById('statActive').textContent    = active;
+  document.getElementById('statSuspended').textContent = suspended;
+}
+
+function renderClientList() {
+  const container = document.getElementById('clientList');
+  if (!CLIENTS.length) {
+    container.innerHTML = '<div class="empty-msg" style="padding:20px 0">Nenhum cliente cadastrado.</div>';
+    return;
+  }
+  container.innerHTML = CLIENTS.map(c => {
+    const m = MODE_LABELS[c.type];
+    const statusCls = c.status === 'active' ? 'badge-active' : 'badge-suspended';
+    const statusTxt = c.status === 'active' ? '● Ativo' : '● Suspenso';
+    const planCls   = 'plan-' + c.plan;
+    const cardCls   = c.status === 'suspended' ? 'client-card suspended' : 'client-card';
+    const avatarCls = 'client-avatar ' + c.type;
+    return `<div class="${cardCls}" id="ccard-${c.id}">
+      <div class="client-card-top">
+        <div class="${avatarCls}">${m.icon}</div>
+        <div class="client-info">
+          <div class="client-name">${c.name}</div>
+          <div class="client-meta">
+            <span class="pill ${statusCls}" style="font-size:10px;padding:2px 8px">${statusTxt}</span>
+            <span class="plan-badge ${planCls}">${PLAN_LABELS[c.plan]}</span>
+            <span style="font-size:11px">${m.label}</span>
+          </div>
+          <div class="client-meta" style="margin-top:4px;font-size:11px">
+            <i class="ti ti-user" style="font-size:11px"></i> ${c.owner}
+            &nbsp;·&nbsp;
+            <i class="ti ti-key" style="font-size:11px"></i> ${c.user}
+          </div>
+        </div>
+      </div>
+      <div class="client-actions">
+        ${c.status === 'active'
+          ? `<button class="btn-sm suspend" onclick="suspendClient('${c.id}')"><i class="ti ti-player-pause"></i> Suspender</button>`
+          : `<button class="btn-sm adm-btn" onclick="activateClient('${c.id}')"><i class="ti ti-player-play"></i> Ativar</button>`
+        }
+        <button class="btn-sm" onclick="changePlan('${c.id}')"><i class="ti ti-arrows-exchange"></i> Plano</button>
+        <button class="btn-sm danger" onclick="deleteClient('${c.id}')"><i class="ti ti-trash"></i> Excluir</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function suspendClient(id) {
+  const c = CLIENTS.find(x => x.id === id);
+  if (!c) return;
+  c.status = 'suspended';
+  addAdmLog('Cliente suspenso: ' + c.name, 'var(--red)');
+  renderClientList(); updateAdmStats();
+  showToast('⏸ ' + c.name + ' suspenso', 'gold');
+}
+
+function activateClient(id) {
+  const c = CLIENTS.find(x => x.id === id);
+  if (!c) return;
+  c.status = 'active';
+  addAdmLog('Cliente ativado: ' + c.name, 'var(--teal)');
+  renderClientList(); updateAdmStats();
+  showToast('✅ ' + c.name + ' ativado', 'teal');
+}
+
+function deleteClient(id) {
+  const c = CLIENTS.find(x => x.id === id);
+  if (!c) return;
+  if (!confirm('Excluir cliente "' + c.name + '"?')) return;
+  CLIENTS = CLIENTS.filter(x => x.id !== id);
+  addAdmLog('Cliente excluído: ' + c.name, 'var(--red)');
+  renderClientList(); updateAdmStats();
+  showToast('🗑 Cliente removido', 'red');
+}
+
+function changePlan(id) {
+  const c = CLIENTS.find(x => x.id === id);
+  if (!c) return;
+  const plans = ['basic','pro','premium'];
+  const current = plans.indexOf(c.plan);
+  const next = plans[(current + 1) % plans.length];
+  c.plan = next;
+  addAdmLog('Plano alterado: ' + c.name + ' → ' + PLAN_LABELS[next], 'var(--gold)');
+  renderClientList();
+  showToast('🔄 Plano alterado para ' + PLAN_LABELS[next], 'gold');
+}
+
+function toggleNewClientForm() {
+  const f = document.getElementById('newClientForm');
+  f.style.display = f.style.display === 'none' ? '' : 'none';
+}
+
+function createClient() {
+  const name  = document.getElementById('ncName').value.trim();
+  const owner = document.getElementById('ncOwner').value.trim();
+  const user  = document.getElementById('ncUser').value.trim().toLowerCase().replace(/\s+/g,'_');
+  const pass  = document.getElementById('ncPass').value.trim();
+  const type  = document.getElementById('ncType').value;
+  const plan  = document.getElementById('ncPlan').value;
+
+  if (!name || !owner || !user || !pass) { showToast('Preencha todos os campos', 'red'); return; }
+  if (CLIENTS.find(c => c.user === user) || ADM_USERS.find(u => u.user === user)) {
+    showToast('Usuário já existe', 'red'); return;
+  }
+
+  const newClient = {
+    id: 'c' + Date.now(), user, pass, name, owner, type, plan,
+    status: 'active', role: 'client',
+    createdAt: new Date().toISOString().slice(0,10),
+  };
+  CLIENTS.push(newClient);
+  addAdmLog('Novo cliente cadastrado: ' + name, 'var(--gold)');
+  renderClientList(); updateAdmStats();
+  toggleNewClientForm();
+  // Clear form
+  ['ncName','ncOwner','ncUser','ncPass'].forEach(id => document.getElementById(id).value = '');
+  showToast('✅ Cliente ' + name + ' criado!', 'teal');
+}
+
+function addAdmLog(msg, color) {
+  const now = new Date();
+  const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  ADM_LOG.unshift({ time, msg, color });
+  if (ADM_LOG.length > 30) ADM_LOG.pop();
+  renderAdmLog();
+}
+
+function renderAdmLog() {
+  const list = document.getElementById('admLog');
+  list.innerHTML = ADM_LOG.map(l => `
+    <div class="log-entry">
+      <span class="log-dot" style="background:${l.color}"></span>
+      <span class="log-msg">${l.msg}</span>
+      <span class="log-time">${l.time}</span>
+    </div>`).join('');
+}
+
+/* ============================================================
+   CLIENT PANEL  SETUP
+============================================================ */
+function setupClientPanel() {
+  const c = loggedClient;
+  document.getElementById('ctClientLabel').textContent = c.name;
+  document.getElementById('ctUserName').textContent    = c.owner;
+
+  // Conta tab
+  document.getElementById('acctName').textContent  = c.name;
+  document.getElementById('acctOwner').textContent = c.owner;
+  document.getElementById('acctUser').textContent  = c.user;
+  document.getElementById('acctPlan').innerHTML    = `<span class="plan-badge plan-${c.plan}">${PLAN_LABELS[c.plan]}</span>`;
+  document.getElementById('acctType').textContent  = MODE_LABELS[c.type].icon + ' ' + MODE_LABELS[c.type].label;
+  document.getElementById('acctStatus').innerHTML  = `<span class="pill badge-active" style="font-size:10px;padding:2px 8px">● Ativo</span>`;
+
+  // Determine unlocked modes based on plan
+  const unlockedModes = getUnlockedModes(c);
+  document.getElementById('acctModes').textContent = unlockedModes.map(m => MODE_LABELS[m].icon + ' ' + MODE_LABELS[m].label).join('  ·  ');
+
+  // Set mode selector — lock unavailable modes
+  setupModeSelector(c, unlockedModes);
+
+  // Default to the client's own type
+  selectMode(c.type);
+
+  // Plan features info
+  renderPlanFeatures(c);
+}
+
+function getUnlockedModes(client) {
+  const allModes = ['bar','bday','wed'];
+  const slots = PLAN_MODES[client.plan] || 1;
+  // Always include own type first
+  const ownIdx = allModes.indexOf(client.type);
+  const result = [client.type];
+  let added = 1;
+  for (let i = 0; i < allModes.length && added < slots; i++) {
+    if (allModes[i] !== client.type) { result.push(allModes[i]); added++; }
+  }
+  return result;
+}
+
+function setupModeSelector(client, unlockedModes) {
+  const allModes = ['bar','bday','wed'];
+  allModes.forEach(m => {
+    const btn = document.getElementById('modeBtn-' + m);
+    if (!btn) return;
+    const isUnlocked = unlockedModes.includes(m);
+    // Remove existing lock overlays
+    btn.querySelectorAll('.lock-overlay').forEach(el => el.remove());
+    if (isUnlocked) {
+      btn.classList.remove('locked');
+    } else {
+      btn.classList.add('locked');
+      const lockEl = document.createElement('span');
+      lockEl.className = 'lock-overlay';
+      lockEl.innerHTML = '<i class="ti ti-lock"></i>';
+      btn.appendChild(lockEl);
+    }
+  });
+  // Show note if any locked
+  const hasLocked = allModes.some(m => !unlockedModes.includes(m));
+  document.getElementById('modeLockedNote').style.display = hasLocked ? '' : 'none';
+}
+
+function renderPlanFeatures(client) {
+  const container = document.getElementById('planFeatures');
+  const plan = client.plan;
+  const features = {
+    basic: [
+      { name:'1 Modo de Evento', ok:true },
+      { name:'Fila em tempo real', ok:true },
+      { name:'Painel DJ', ok:true },
+      { name:'Múltiplos Modos', ok:false },
+      { name:'Furar fila via Pix', ok:false },
+      { name:'Relatórios', ok:false },
+    ],
+    pro: [
+      { name:'2 Modos de Evento', ok:true },
+      { name:'Fila em tempo real', ok:true },
+      { name:'Painel DJ', ok:true },
+      { name:'Furar fila via Pix', ok:true },
+      { name:'Duetos', ok:true },
+      { name:'Relatórios', ok:false },
+    ],
+    premium: [
+      { name:'Todos os Modos', ok:true },
+      { name:'Fila em tempo real', ok:true },
+      { name:'Painel DJ', ok:true },
+      { name:'Furar fila via Pix', ok:true },
+      { name:'Duetos', ok:true },
+      { name:'Relatórios avançados', ok:true },
+    ],
+  };
+  const list = features[plan] || features.basic;
+  container.innerHTML = `
+    <div class="account-card">
+      <h3><i class="ti ti-sparkles"></i> Recursos do Plano ${PLAN_LABELS[plan]}</h3>
+      ${list.map(f => `
+        <div class="account-row">
+          <span class="account-row-label">${f.name}</span>
+          <span style="color:${f.ok ? 'var(--green)' : 'var(--muted)'}; font-size:17px">${f.ok ? '✓' : '✗'}</span>
+        </div>`).join('')}
+      <div style="margin-top:12px;text-align:center">
+        <div style="font-size:11px;color:var(--muted)">Para fazer upgrade, entre em contato com a 4Byte Team.</div>
+      </div>
+    </div>`;
+}
+
+/* ============================================================
+   MODE SELECTION
+============================================================ */
+function selectMode(m) {
+  state.mode = m;
+  ['bar','bday','wed'].forEach(x => {
+    const btn = document.getElementById('modeBtn-' + x);
+    if (!btn) return;
+    // Preserve locked class, just update active
+    const isLocked = btn.classList.contains('locked');
+    btn.className = 'mode-btn' + (isLocked ? ' locked' : '') + (x === m ? ' active-' + x : '');
+    if (isLocked) {
+      if (!btn.querySelector('.lock-overlay')) {
+        const lockEl = document.createElement('span');
+        lockEl.className = 'lock-overlay';
+        lockEl.innerHTML = '<i class="ti ti-lock"></i>';
+        btn.appendChild(lockEl);
+      }
+    }
+    const s = document.getElementById('settings-' + x);
+    if (s) s.classList.toggle('show', x === m);
+  });
+}
+
+function getSettings() {
+  if (state.mode === 'bar') return {
+    mesa:     document.getElementById('tog-mesa')?.checked ?? true,
+    rotation: document.getElementById('tog-rotation')?.checked ?? true,
+    pix:      document.getElementById('tog-pix')?.checked ?? false,
+    pixValue: parseFloat(document.getElementById('pixValue')?.value) || 5,
+    songLimit: 0, hidden: false,
+    duet:     document.getElementById('tog-duet')?.checked ?? true,
+  };
+  if (state.mode === 'bday') return {
+    mesa: false,
+    rotation: document.getElementById('tog-rotation-bday')?.checked ?? true,
+    pix: false, pixValue: 5,
+    songLimit: parseInt(document.getElementById('songLimit')?.value) || 2,
+    hidden: false,
+    duet: document.getElementById('tog-duet')?.checked ?? true,
+  };
+  if (state.mode === 'wed') return {
+    mesa: false, rotation: false, pix: false, pixValue: 0,
+    songLimit: parseInt(document.getElementById('wedSongLimit')?.value) || 1,
+    hidden: document.getElementById('tog-hidden')?.checked ?? true,
+    duet: document.getElementById('tog-duet')?.checked ?? true,
+  };
+  return state.settings;
+}
+
+/* ============================================================
+   PARTY PERSISTENCE  (localStorage — compartilhado no mesmo domínio)
+   O organizador salva os dados da festa ao gerar o QR Code.
+   O participante lê esses dados ao abrir o link ?festa=CODIGO.
+============================================================ */
+const STORE_KEY = 'kl_party_';
+
+function savePartyToStorage() {
+  const data = {
+    partyName:      state.partyName,
+    partyCode:      state.partyCode,
+    partyPlace:     document.getElementById('partyPlace')?.value || '',
+    mode:           state.mode,
+    settings:       state.settings,
+    savedAt:        Date.now(),
+  };
+  try {
+    localStorage.setItem(STORE_KEY + state.partyCode, JSON.stringify(data));
+  } catch(e) {}
+}
+
+function loadPartyFromStorage(code) {
+  try {
+    const raw = localStorage.getItem(STORE_KEY + code.toUpperCase());
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    // Expire after 24h
+    if (Date.now() - data.savedAt > 86400000) {
+      localStorage.removeItem(STORE_KEY + code.toUpperCase());
+      return null;
+    }
+    return data;
+  } catch(e) { return null; }
+}
+
+function clearPartyFromStorage(code) {
+  try { localStorage.removeItem(STORE_KEY + code); } catch(e) {}
+}
+
+/* ============================================================
+   URL HELPERS
+============================================================ */
+function getBaseUrl() {
+  return window.location.origin + window.location.pathname;
+}
+
+function getPartyUrl(code) {
+  return getBaseUrl() + '?festa=' + code;
+}
+
+/* ============================================================
+   GENERATE PARTY
+============================================================ */
+function generateParty() {
+  const name = document.getElementById('partyName').value.trim() || 'Minha Festa';
+  state.settings = getSettings();
+  Object.assign(state, {
+    partyName: name,
+    partyCode: Math.random().toString(36).substring(2,7).toUpperCase(),
+    queue:[], currentSinging:0, demoCount:0, myIndex:-1,
+    paused:false, singCount:{}, personSongs:{},
+    qrGenerated: true,
+  });
+
+  document.getElementById('ctSetupCard').style.display = 'none';
+  document.getElementById('qrSection').classList.add('show');
+  document.getElementById('partyCodeDisplay').textContent = state.partyCode;
+  document.getElementById('joinPartyLabel').textContent   = 'Festa: ' + name;
+  document.getElementById('queuePartyBadge').textContent  = name;
+
+  const link = getPartyUrl(state.partyCode);
+  document.getElementById('partyLinkDisplay').textContent = link;
+  updateModeBadge();
+  updateJoinScreen();
+  drawQR(link);
+  savePartyToStorage();   // ← persist so participants can read from other devices
+  updateHostMonitor();
+  updateDjStatus('Festa iniciada! Aguardando participantes.');
+  showToast('🎉 Festa criada! Compartilhe o QR Code.', 'teal');
+  // Go straight to command center
+  showCtTab('tab-comando');
+}
+
+function resetParty() {
+  if (state.partyCode) clearPartyFromStorage(state.partyCode);
+  Object.assign(state, {
+    partyName:'', partyCode:'', queue:[], currentSinging:0, demoCount:0,
+    myIndex:-1, myName:'', mySong:'', paused:false, singCount:{}, personSongs:{},
+    qrGenerated:false,
+  });
+  document.getElementById('ctSetupCard').style.display = '';
+  document.getElementById('qrSection').classList.remove('show');
+  updateHostMonitor();
+}
+
+function updateModeBadge() {
+  const m = MODE_LABELS[state.mode];
+  document.getElementById('modeBadgeDisplay').innerHTML =
+    `<div class="mode-badge" style="font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px;background:${m.color}20;color:${m.color};border:1px solid ${m.color}40;text-transform:uppercase;letter-spacing:.8px">${m.icon} ${m.label}</div>`;
+}
+
+function updateJoinScreen() {
+  const m = state.mode;
+  const lbl = document.getElementById('joinModeLabel');
+  lbl.textContent = MODE_LABELS[m].icon + ' ' + MODE_LABELS[m].label;
+  lbl.className = 'join-mode-label ' + m;
+  document.getElementById('mesaField').style.display  = (m === 'bar' && state.settings.mesa)  ? '' : 'none';
+  document.getElementById('duetField').style.display  = state.settings.duet ? '' : 'none';
+  document.getElementById('pixFureBtn').style.display = (m === 'bar' && state.settings.pix)   ? '' : 'none';
+}
+
+/* ============================================================
+   QUEUE MANAGEMENT
+============================================================ */
+function addToQueue(name, song, duet, mesa) {
+  state.queue.push({
+    name, song,
+    duet: duet || '', mesa: mesa || '',
+    color: COLORS[state.queue.length % COLORS.length],
+    id: Date.now() + Math.random(),
+  });
+  if (!state.personSongs[name]) state.personSongs[name] = 0;
+  state.personSongs[name]++;
+  updateHostMonitor();
+}
+
+function getDisplayQueue() {
+  if (!state.settings.rotation) return state.queue;
+  const cur = state.currentSinging;
+  const past = state.queue.slice(0, cur);
+  const singing = state.queue.slice(cur, cur + 1);
+  const waiting = state.queue.slice(cur + 1);
+  const singMap = {};
+  past.forEach(p => { singMap[p.name] = (singMap[p.name]||0)+1; });
+  if (singing.length) singMap[singing[0].name] = (singMap[singing[0].name]||0)+1;
+  const sorted = [...waiting].sort((a,b) => (singMap[a.name]||0) - (singMap[b.name]||0));
+  return [...past, ...singing, ...sorted];
+}
+
+function advanceQueue() {
+  if (state.paused) { showToast('Fila pausada! Retome antes de avançar.','gold'); return; }
+  if (state.currentSinging >= state.queue.length) return;
+  const prev = state.queue[state.currentSinging - 1];
+  if (prev) state.singCount[prev.name] = (state.singCount[prev.name]||0)+1;
+  state.currentSinging = Math.min(state.currentSinging+1, state.queue.length);
+  const current = state.queue[state.currentSinging - 1];
+  updateHostMonitor(); renderQueue();
+  updateDjStatus('Próximo chamado: ' + (current ? current.name : '—'));
+  if (current?.duet) showToast('🎤 Dueto: ' + current.name + ' & ' + current.duet, 'teal');
+}
+
+function skipCurrent() {
+  if (state.currentSinging === 0) return;
+  state.currentSinging++;
+  updateHostMonitor(); renderQueue();
+  updateDjStatus('Vez passada — próximo na fila');
+  showToast('Vez passada ao próximo','gold');
+}
+
+function togglePause() {
+  state.paused = !state.paused;
+  const btn = document.getElementById('djPauseBtn');
+  const banner1 = document.getElementById('djPausedBanner');
+  const banner2 = document.getElementById('hostPausedBanner');
+  const banner3 = document.getElementById('queuePausedBanner');
+  if (state.paused) {
+    btn.classList.add('paused');
+    btn.innerHTML = '<i class="ti ti-player-play"></i> Retomar Fila';
+    [banner1,banner2,banner3].forEach(b => b?.classList.add('show'));
+    updateDjStatus('⏸ Fila pausada');
+    showToast('⏸ Fila pausada','purple');
+  } else {
+    btn.classList.remove('paused');
+    btn.innerHTML = '<i class="ti ti-player-pause"></i> Pausar Fila';
+    [banner1,banner2,banner3].forEach(b => b?.classList.remove('show'));
+    updateDjStatus('▶ Fila retomada');
+    showToast('▶ Fila retomada!','teal');
+  }
+}
+
+function rejectTop() {
+  const cur = state.currentSinging;
+  if (cur >= state.queue.length) return;
+  const removed = state.queue.splice(cur, 1)[0];
+  updateHostMonitor(); renderQueue();
+  updateDjStatus('Removido: ' + removed.name);
+  showToast('Entrada removida da fila','red');
+}
+
+function updateDjStatus(msg) {
+  const el = document.getElementById('djStatus');
+  if (el) el.textContent = msg;
+}
+
+/* ============================================================
+   HOST MONITOR
+============================================================ */
+function updateHostMonitor() {
+  const list  = document.getElementById('hostQueueList');
+  const count = document.getElementById('queueCount');
+  if (!list) return;
+  count.textContent = state.queue.length;
+  if (!state.queue.length) {
+    list.innerHTML = '<div class="empty-msg"><i class="ti ti-music-off"></i><br>Nenhum participante ainda.<br>Compartilhe o QR Code!</div>';
+    return;
+  }
+  const dq = getDisplayQueue();
+  list.innerHTML = dq.map((p,i) => {
+    const singing = i === state.currentSinging - 1;
+    const next    = i === state.currentSinging;
+    const cls     = singing ? 'singing' : next ? 'next' : '';
+    const tag     = singing
+      ? '<span class="pill pill-teal">🎤 Cantando</span>'
+      : next ? '<span class="pill pill-gold">⚡ Próximo</span>' : '';
+    const mesa = p.mesa ? `<span style="font-size:10px;color:var(--muted)">🪑 ${p.mesa}</span>` : '';
+    return `<div class="qitem ${cls}">
+      <span class="qitem-pos ${cls}">${i+1}</span>
+      <div class="qitem-info">
+        <div class="qitem-name">${p.name}${p.duet?' & '+p.duet:''}</div>
+        <div class="qitem-song">${p.song} ${mesa}</div>
+      </div>${tag}
+    </div>`;
+  }).join('');
+}
+
+/* ============================================================
+   DEMO: SIM JOIN
+============================================================ */
+function simJoin() {
+  if (!state.qrGenerated) { generateParty(); return; }
+  if (state.demoCount >= SONGS_DEMO.length) return;
+  const [name, song, duet] = SONGS_DEMO[state.demoCount++];
+  addToQueue(name, song, duet);
+  showToast('👤 ' + name + ' entrou na fila','teal');
+}
+
+/* ============================================================
+   JOIN QUEUE (participant)
+============================================================ */
+function joinQueue() {
+  const nameEl = document.getElementById('participantName');
+  const songEl = document.getElementById('participantSong');
+  const duetEl = document.getElementById('participantDuet');
+  const mesaEl = document.getElementById('participantMesa');
+  const limitW = document.getElementById('limitWarning');
+  const name = nameEl.value.trim(), song = songEl.value.trim();
+  const duet = state.settings.duet ? (duetEl?.value.trim()||'') : '';
+  const mesa = state.settings.mesa ? (mesaEl?.value.trim()||'') : '';
+
+  nameEl.style.borderColor = name ? '' : 'var(--red)';
+  songEl.style.borderColor = song ? '' : 'var(--red)';
+  if (!name || !song) return;
+
+  if (state.settings.songLimit > 0) {
+    const count = state.personSongs[name] || 0;
+    if (count >= state.settings.songLimit) {
+      limitW.textContent = `Você já pediu ${count} música(s). Limite: ${state.settings.songLimit}.`;
+      limitW.classList.add('show'); return;
+    }
+  }
+  limitW.classList.remove('show');
+
+  if (!state.qrGenerated) {
+    state.partyName = 'Aniversário da Ana 🎉';
+    state.partyCode = 'ANI25'; state.qrGenerated = true;
+    document.getElementById('queuePartyBadge').textContent = state.partyName;
+    if (!state.queue.length) {
+      ['Carlos','Juliana','Roberto'].forEach((n,i) => addToQueue(n, SONGS_DEMO[i][1]));
+      state.currentSinging = 1;
+    }
+  }
+
+  state.myName = name; state.mySong = song;
+  addToQueue(name, song, duet, mesa);
+  state.myIndex = state.queue.length - 1;
+  showScreen('queue');
+  renderQueue();
+}
+
+/* ============================================================
+   RENDER QUEUE (participant view)
+============================================================ */
+function renderQueue() {
+  const list       = document.getElementById('mainQueueList');
+  const myPosDsp   = document.getElementById('myPosDisplay');
+  const botName    = document.getElementById('bottomName');
+  const waitDsp    = document.getElementById('waitTimeDisplay');
+  const myTurnBnr  = document.getElementById('myTurnBanner');
+  const nextUpBnr  = document.getElementById('nextUpBanner');
+  const hiddenMsg  = document.getElementById('hiddenQueueMsg');
+  const hiddenPos  = document.getElementById('hiddenMyPos');
+
+  const q = state.queue, cur = state.currentSinging, mi = state.myIndex;
+
+  if (state.settings.hidden && state.mode === 'wed') {
+    list.style.display = 'none'; hiddenMsg.style.display = 'flex';
+    if (mi >= 0) {
+      const pos = mi - cur + 1, isSinging = mi === cur - 1;
+      myTurnBnr.classList.toggle('show', isSinging);
+      hiddenPos.textContent = isSinging ? '🎤 Sua vez!' : (pos > 0 ? `Sua posição: #${pos}` : '');
+      myPosDsp.textContent  = isSinging ? '🎤' : '#' + Math.max(1,pos);
+      botName.textContent   = state.myName + ' — ' + state.mySong;
+      waitDsp.textContent   = isSinging ? 'Cantando agora!' : `~${Math.max(0,pos-1)*4} min`;
+    }
+    return;
+  }
+  list.style.display = ''; hiddenMsg.style.display = 'none';
+
+  if (!q.length) {
+    list.innerHTML = '<div style="text-align:center;padding:60px 0;color:var(--muted)"><i class="ti ti-music-off" style="font-size:40px"></i><br><br>Fila vazia</div>';
+    return;
+  }
+
+  const dq = getDisplayQueue();
+  const myEntry = mi >= 0 ? q[mi] : null;
+  const myDispIdx = myEntry ? dq.findIndex(e => e.id === myEntry.id) : -1;
+  const isSinging = myDispIdx === cur - 1, isNext = myDispIdx === cur;
+  const myPos = myDispIdx - cur + 1;
+
+  myTurnBnr.classList.toggle('show', isSinging);
+  nextUpBnr.classList.toggle('show', isNext && !isSinging);
+
+  if (mi < 0) { myPosDsp.textContent='#—'; botName.textContent='—'; waitDsp.textContent='Você não está na fila'; }
+  else if (isSinging) { myPosDsp.textContent='🎤'; botName.textContent=state.myName; waitDsp.textContent='Cantando agora!'; }
+  else {
+    myPosDsp.textContent = '#' + Math.max(1,myPos);
+    botName.textContent  = state.myName + ' — ' + state.mySong;
+    const wait = Math.max(0, myPos-1);
+    waitDsp.textContent  = wait === 0 ? 'Próximo a cantar!' : `~${wait*4} min de espera`;
+  }
+
+  list.innerHTML = dq.map((p,i) => {
+    const singing = i===cur-1, nextUp = i===cur;
+    const isMe    = p.id === (myEntry?.id);
+    const isPast  = i < cur-1;
+    let eCls = '';
+    if (isMe && singing) eCls='is-singing is-me';
+    else if (singing)    eCls='is-singing';
+    else if (isMe && nextUp) eCls='is-next is-me';
+    else if (nextUp)     eCls='is-next';
+    else if (isMe)       eCls='is-me';
+    const nCls   = singing?'s':nextUp?'n':isMe?'m':'';
+    const stTag  = singing ? '<span class="pill pill-teal">🎤 Cantando</span>' : nextUp ? '<span class="pill pill-gold">⚡ Próximo</span>' : '';
+    const meTag  = isMe ? '<div class="me-tag">Você</div>' : '';
+    const init   = p.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    const opac   = (isPast && !isMe) ? 'opacity:.35' : '';
+    const rot    = state.settings.rotation && state.singCount[p.name] > 0
+      ? `<span class="rotation-badge">${state.singCount[p.name]}x</span>` : '';
+    const mesa   = p.mesa ? `<span style="font-size:10px;color:var(--muted)"> · 🪑 ${p.mesa}</span>` : '';
+    return `<div class="queue-entry ${eCls}" style="${opac}">
+      ${meTag}
+      <span class="entry-num ${nCls}">${i+1}</span>
+      <div class="entry-avatar" style="background:${p.color}22;color:${p.color}">${init}</div>
+      <div class="entry-details">
+        <div class="entry-name">${p.name}${p.duet?' & '+p.duet:''} ${rot}</div>
+        <div class="entry-song">🎵 ${p.song}${mesa}</div>
+      </div>${stTag}
+    </div>`;
+  }).join('');
+
+  if (myDispIdx >= 0 && list.children[myDispIdx])
+    setTimeout(() => list.children[myDispIdx].scrollIntoView({behavior:'smooth',block:'center'}), 120);
+}
+
+/* ============================================================
+   PIX
+============================================================ */
+function openPixModal() {
+  if (state.myIndex < 0) { showToast('Você não está na fila.','red'); return; }
+  const val = state.settings.pixValue || 5;
+  document.getElementById('pixAmount').textContent = 'R$ ' + val.toFixed(2).replace('.',',');
+  document.getElementById('pixModal').classList.add('show');
+}
+function closePixModal() { document.getElementById('pixModal').classList.remove('show'); }
+function confirmPix() {
+  const mi = state.myIndex, cur = state.currentSinging;
+  if (mi <= cur) { showToast('Você já está no topo!','gold'); closePixModal(); return; }
+  const target = Math.max(cur+1, mi-1);
+  const entry  = state.queue.splice(mi,1)[0];
+  state.queue.splice(target,0,entry);
+  state.myIndex = target;
+  closePixModal(); renderQueue(); updateHostMonitor();
+  showToast('🟢 Pix confirmado! Subiu uma posição 🚀','teal');
+}
+
+/* ============================================================
+   COPY LINK
+============================================================ */
+function copyLink() {
+  const link = document.getElementById('partyLinkDisplay').textContent;
+  navigator.clipboard.writeText(link).catch(()=>{});
+  const btn = document.querySelector('[onclick="copyLink()"]');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<i class="ti ti-check"></i> Copiado!';
+  setTimeout(() => btn.innerHTML = orig, 2000);
+}
+
+/* ============================================================
+   TOAST
+============================================================ */
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + (type||'');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+/* ============================================================
+   QR CODE REAL (qrcodejs)
+============================================================ */
+let _qrInstance = null;
+function drawQR(url) {
+  const container = document.getElementById('qrCanvas');
+  if (!container) return;
+  // Clear previous
+  container.innerHTML = '';
+  if (_qrInstance) { try { _qrInstance.clear(); } catch(e){} }
+  _qrInstance = new QRCode(container, {
+    text:         url,
+    width:        200,
+    height:       200,
+    colorDark:    '#080810',
+    colorLight:   '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H,
+  });
+}
+
+/* ============================================================
+   WELCOME SCREEN SETUP
+============================================================ */
+function openWelcomeScreen() {
+  const params = new URLSearchParams(window.location.search);
+  const code   = params.get('festa');
+  if (!code) return false;
+
+  // Load party data — first try localStorage (same domain),
+  // then fall back to live in-memory state (same tab/session)
+  const stored     = loadPartyFromStorage(code.toUpperCase());
+  const liveMatch  = state.qrGenerated && state.partyCode === code.toUpperCase();
+  const partyData  = stored || (liveMatch ? {
+    partyName:  state.partyName,
+    partyPlace: document.getElementById('partyPlace')?.value || '',
+    mode:       state.mode,
+    settings:   state.settings,
+  } : null);
+
+  const partyName  = partyData?.partyName  || 'KaraokeLive';
+  const partyPlace = partyData?.partyPlace || '';
+  const mode       = partyData?.mode       || 'bar';
+  const settings   = partyData?.settings   || state.settings;
+
+  // Apply settings so join form shows right fields
+  state.settings = settings;
+  state.mode     = mode;
+  if (!state.partyName && partyName !== 'KaraokeLive') {
+    state.partyName = partyName;
+    state.partyCode = code.toUpperCase();
+    state.qrGenerated = true;
+  }
+
+  const queueLen = state.queue.length;
+  const waiting  = Math.max(0, queueLen - state.currentSinging);
+  const waitMin  = waiting * 4;
+
+  document.getElementById('welcomePartyName').textContent  = partyName;
+  document.getElementById('welcomePartyPlace').textContent = partyPlace;
+  document.getElementById('welcomeCodeBadge').textContent  = code.toUpperCase();
+
+  const pill = document.getElementById('welcomeModePill');
+  const m    = MODE_LABELS[mode] || MODE_LABELS['bar'];
+  pill.textContent = m.icon + ' ' + m.label;
+  pill.className   = 'welcome-mode-pill ' + mode;
+
+  document.getElementById('welcomeQueueInfo').textContent =
+    waiting === 0 ? 'Fila vazia — seja o primeiro!' :
+    waiting === 1 ? '1 pessoa na fila agora' :
+    waiting + ' pessoas na fila agora';
+
+  document.getElementById('welcomeWaitInfo').textContent =
+    waitMin === 0 ? 'Você canta logo!' : `~${waitMin} min de espera estimada`;
+
+  // Pre-fill join screen
+  document.getElementById('joinPartyLabel').textContent = 'Festa: ' + partyName;
+  document.getElementById('queuePartyBadge').textContent = partyName;
+  const jlbl = document.getElementById('joinModeLabel');
+  jlbl.textContent = m.icon + ' ' + m.label;
+  jlbl.className   = 'join-mode-label ' + mode;
+  updateJoinScreen();
+
+  showScreen('welcome');
+  return true;
+}
+
+/* ============================================================
+   INIT
+============================================================ */
+// First check if this is a participant arriving via QR Code
+if (!openWelcomeScreen()) {
+  // Otherwise normal auth flow
+  const role = checkAuth();
+  if      (role === 'adm')    { showScreen('adm');    renderAdmPanel(); }
+  else if (role === 'client') { showScreen('client'); setupClientPanel(); }
+  else                        { showScreen('login'); }
+}
+</script>
 </body>
 </html>
