@@ -1680,53 +1680,63 @@ function getSettings() {
 }
 
 /* ============================================================
-   PARTY PERSISTENCE  (localStorage — compartilhado no mesmo domínio)
-   O organizador salva os dados da festa ao gerar o QR Code.
-   O participante lê esses dados ao abrir o link ?festa=CODIGO.
+   PARTY DATA IN URL  — sem banco de dados, sem localStorage
+   O QR Code carrega os dados da festa na própria URL:
+   ?festa=CODIGO&n=NomeDaFesta&m=bar&p=Local
+   Assim qualquer dispositivo que escaneia recebe os dados.
 ============================================================ */
-const STORE_KEY = 'kl_party_';
+function getPartyUrl(code) {
+  const base  = window.location.origin + window.location.pathname;
+  const name  = encodeURIComponent(state.partyName);
+  const place = encodeURIComponent(document.getElementById('partyPlace')?.value || '');
+  const mode  = state.mode;
+  return `${base}?festa=${code}&n=${name}&m=${mode}&p=${place}`;
+}
 
-function savePartyToStorage() {
-  const data = {
-    partyName:      state.partyName,
-    partyCode:      state.partyCode,
-    partyPlace:     document.getElementById('partyPlace')?.value || '',
-    mode:           state.mode,
-    settings:       state.settings,
-    savedAt:        Date.now(),
+function readPartyFromUrl() {
+  const p = new URLSearchParams(window.location.search);
+  if (!p.get('festa')) return null;
+  return {
+    partyCode:  p.get('festa').toUpperCase(),
+    partyName:  decodeURIComponent(p.get('n') || 'KaraokeLive'),
+    partyPlace: decodeURIComponent(p.get('p') || ''),
+    mode:       p.get('m') || 'bar',
   };
-  try {
-    localStorage.setItem(STORE_KEY + state.partyCode, JSON.stringify(data));
-  } catch(e) {}
-}
-
-function loadPartyFromStorage(code) {
-  try {
-    const raw = localStorage.getItem(STORE_KEY + code.toUpperCase());
-    if (!raw) return null;
-    const data = JSON.parse(raw);
-    // Expire after 24h
-    if (Date.now() - data.savedAt > 86400000) {
-      localStorage.removeItem(STORE_KEY + code.toUpperCase());
-      return null;
-    }
-    return data;
-  } catch(e) { return null; }
-}
-
-function clearPartyFromStorage(code) {
-  try { localStorage.removeItem(STORE_KEY + code); } catch(e) {}
 }
 
 /* ============================================================
-   URL HELPERS
+   QUEUE SYNC via localStorage  (mesmo dispositivo / mesma aba)
+   A fila em si ainda vive em memória — para sincronizar entre
+   dispositivos em tempo real seria necessário um backend.
+   Por ora o organizador vê a fila no próprio dispositivo.
+============================================================ */
+function saveQueueToStorage() {
+  if (!state.partyCode) return;
+  try {
+    localStorage.setItem('kl_queue_' + state.partyCode, JSON.stringify({
+      queue:          state.queue,
+      currentSinging: state.currentSinging,
+      paused:         state.paused,
+      ts:             Date.now(),
+    }));
+  } catch(e) {}
+}
+
+function loadQueueFromStorage(code) {
+  try {
+    const raw = localStorage.getItem('kl_queue_' + code);
+    if (!raw) return null;
+    const d = JSON.parse(raw);
+    if (Date.now() - d.ts > 86400000) return null;
+    return d;
+  } catch(e) { return null; }
+}
+
+/* ============================================================
+   URL HELPERS (base)
 ============================================================ */
 function getBaseUrl() {
   return window.location.origin + window.location.pathname;
-}
-
-function getPartyUrl(code) {
-  return getBaseUrl() + '?festa=' + code;
 }
 
 /* ============================================================
@@ -1754,7 +1764,6 @@ function generateParty() {
   updateModeBadge();
   updateJoinScreen();
   drawQR(link);
-  savePartyToStorage();   // ← persist so participants can read from other devices
   updateHostMonitor();
   updateDjStatus('Festa iniciada! Aguardando participantes.');
   showToast('🎉 Festa criada! Compartilhe o QR Code.', 'teal');
@@ -1763,7 +1772,6 @@ function generateParty() {
 }
 
 function resetParty() {
-  if (state.partyCode) clearPartyFromStorage(state.partyCode);
   Object.assign(state, {
     partyName:'', partyCode:'', queue:[], currentSinging:0, demoCount:0,
     myIndex:-1, myName:'', mySong:'', paused:false, singCount:{}, personSongs:{},
@@ -1953,21 +1961,15 @@ function joinQueue() {
   }
   limitW.classList.remove('show');
 
-  if (!state.qrGenerated) {
-    state.partyName   = 'Festa da Copa 🏆';
-    state.partyCode   = 'COPA1'; state.qrGenerated = true;
-    document.getElementById('queuePartyBadge').textContent = state.partyName;
-    if (!state.queue.length) {
-      addToQueue('Carlos', '042');
-      addToQueue('Juliana', '117');
-      addToQueue('Roberto', '203');
-      state.currentSinging = 1;
-    }
+  if (!state.qrGenerated || !state.partyCode) {
+    showToast('❌ Festa não encontrada. Use o QR Code.', 'red');
+    return;
   }
 
   state.myName = name; state.mySong = code;
   addToQueue(name, code, duet, mesa);
   state.myIndex = state.queue.length - 1;
+  saveQueueToStorage();
   // Clear fields for next use
   nameEl.value = ''; codeEl.value = '';
   showScreen('queue');
@@ -2124,53 +2126,43 @@ function drawQR(url) {
 }
 
 /* ============================================================
-   WELCOME SCREEN SETUP
+   WELCOME SCREEN SETUP  — dados chegam pela URL do QR Code
 ============================================================ */
 function openWelcomeScreen() {
-  const params = new URLSearchParams(window.location.search);
-  const code   = params.get('festa');
-  if (!code) return false;
+  const partyData = readPartyFromUrl();
+  if (!partyData) return false;
 
-  // Load party data — first try localStorage (same domain),
-  // then fall back to live in-memory state (same tab/session)
-  const stored     = loadPartyFromStorage(code.toUpperCase());
-  const liveMatch  = state.qrGenerated && state.partyCode === code.toUpperCase();
-  const partyData  = stored || (liveMatch ? {
-    partyName:  state.partyName,
-    partyPlace: document.getElementById('partyPlace')?.value || '',
-    mode:       state.mode,
-    settings:   state.settings,
-  } : null);
+  const { partyCode, partyName, partyPlace, mode } = partyData;
 
-  const partyName  = partyData?.partyName  || 'KaraokeLive';
-  const partyPlace = partyData?.partyPlace || '';
-  const mode       = partyData?.mode       || 'bar';
-  const settings   = partyData?.settings   || state.settings;
+  // Store in state so joinQueue knows which party
+  state.partyCode    = partyCode;
+  state.partyName    = partyName;
+  state.mode         = mode;
+  state.qrGenerated  = true;
+  // Apply default settings for the mode
+  state.settings = {
+    bar:  { mesa:false, rotation:true, pix:false, pixValue:5, songLimit:0, hidden:false, duet:true },
+    bday: { mesa:false, rotation:true, pix:false, pixValue:5, songLimit:2, hidden:false, duet:true },
+    wed:  { mesa:false, rotation:false,pix:false, pixValue:0, songLimit:1, hidden:false, duet:false },
+  }[mode] || state.settings;
 
-  // Apply settings so join form shows right fields
-  state.settings = settings;
-  state.mode     = mode;
-  if (!state.partyName && partyName !== 'KaraokeLive') {
-    state.partyName = partyName;
-    state.partyCode = code.toUpperCase();
-    state.qrGenerated = true;
-  }
-
-  const queueLen = state.queue.length;
-  const waiting  = Math.max(0, queueLen - state.currentSinging);
-  const waitMin  = waiting * 4;
-
+  // Welcome screen content
   document.getElementById('welcomePartyName').textContent  = partyName;
   document.getElementById('welcomePartyPlace').textContent = partyPlace;
-  document.getElementById('welcomeCodeBadge').textContent  = code.toUpperCase();
+  document.getElementById('welcomeCodeBadge').textContent  = partyCode;
 
+  const m = MODE_LABELS[mode] || MODE_LABELS['bar'];
   const pill = document.getElementById('welcomeModePill');
-  const m    = MODE_LABELS[mode] || MODE_LABELS['bar'];
   pill.textContent = m.icon + ' ' + m.label;
   pill.className   = 'welcome-mode-pill ' + mode;
 
+  // Queue info from localStorage (same device as organizer) or blank
+  const queueData = loadQueueFromStorage(partyCode);
+  const waiting   = queueData ? Math.max(0, queueData.queue.length - queueData.currentSinging) : 0;
+  const waitMin   = waiting * 4;
+
   document.getElementById('welcomeQueueInfo').textContent =
-    waiting === 0 ? 'Fila vazia — seja o primeiro!' :
+    waiting === 0 ? 'Fila aberta — seja o primeiro!' :
     waiting === 1 ? '1 pessoa na fila agora' :
     waiting + ' pessoas na fila agora';
 
@@ -2178,7 +2170,7 @@ function openWelcomeScreen() {
     waitMin === 0 ? 'Você canta logo!' : `~${waitMin} min de espera estimada`;
 
   // Pre-fill join screen
-  document.getElementById('joinPartyLabel').textContent = 'Festa: ' + partyName;
+  document.getElementById('joinPartyLabel').textContent  = 'Festa: ' + partyName;
   document.getElementById('queuePartyBadge').textContent = partyName;
   const jlbl = document.getElementById('joinModeLabel');
   jlbl.textContent = m.icon + ' ' + m.label;
