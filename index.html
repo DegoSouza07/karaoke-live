@@ -1096,7 +1096,7 @@ html, body {
       </div>
     </div>
     <div class="welcome-code-badge" id="welcomeCodeBadge">-----</div>
-    <button class="btn-primary" onclick="showScreen('join')" style="margin-top:4px">
+    <button class="btn-primary" onclick="goToJoin()" style="margin-top:4px">
       <i class="ti ti-microphone"></i> Quero Cantar!
     </button>
     <p style="font-size:11px;color:var(--muted)">Ao entrar você poderá acompanhar a fila em tempo real.</p>
@@ -1120,11 +1120,21 @@ html, body {
       </div>
       <div class="input-group">
         <label>Seu nome</label>
-        <input type="text" id="participantName" placeholder="Como te chamamos?" />
+        <input type="text" id="participantName" placeholder="Como te chamamos?"
+          onkeydown="if(event.key==='Enter')document.getElementById('participantCode').focus()" />
       </div>
       <div class="input-group">
-        <label>Música escolhida</label>
-        <input type="text" id="participantSong" placeholder="Nome da música e artista" />
+        <label>Código da música <span style="font-weight:400;color:var(--muted)">(ver cardápio)</span></label>
+        <div style="position:relative">
+          <input type="text" id="participantCode" placeholder="Ex: 042"
+            style="font-family:var(--font-t);font-size:22px;letter-spacing:4px;text-align:center;text-transform:uppercase"
+            maxlength="6"
+            onkeydown="if(event.key==='Enter')joinQueue()" />
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:5px;text-align:center">
+          <i class="ti ti-info-circle" style="font-size:12px"></i>
+          O DJ identifica a música pelo código do cardápio
+        </div>
       </div>
       <div class="input-group" id="duetField" style="display:none">
         <label>Parceiro de Dueto (opcional)</label>
@@ -1233,6 +1243,11 @@ let CLIENTS = [
     id: 'c003', user: 'casamentolima', pass: 'wed789', name: 'Casamento Lima & Silva',
     owner: 'Carlos Lima', type: 'wed', plan: 'premium', status: 'suspended',
     role: 'client', createdAt: '2025-05-20',
+  },
+  {
+    id: 'c004', user: 'festadacopa', pass: 'copa2025', name: 'Festa da Copa',
+    owner: 'Organizador Copa', type: 'bar', plan: 'pro', status: 'active',
+    role: 'client', createdAt: '2025-06-13',
   },
 ];
 
@@ -1878,12 +1893,16 @@ function updateHostMonitor() {
     const tag     = singing
       ? '<span class="pill pill-teal">🎤 Cantando</span>'
       : next ? '<span class="pill pill-gold">⚡ Próximo</span>' : '';
-    const mesa = p.mesa ? `<span style="font-size:10px;color:var(--muted)">🪑 ${p.mesa}</span>` : '';
+    const mesa = p.mesa ? `<span style="font-size:10px;color:var(--muted)"> · 🪑 ${p.mesa}</span>` : '';
     return `<div class="qitem ${cls}">
       <span class="qitem-pos ${cls}">${i+1}</span>
       <div class="qitem-info">
         <div class="qitem-name">${p.name}${p.duet?' & '+p.duet:''}</div>
-        <div class="qitem-song">${p.song} ${mesa}</div>
+        <div class="qitem-song">
+          <span style="font-family:var(--font-t);font-size:16px;letter-spacing:2px;color:${singing?'var(--teal)':next?'var(--gold)':'var(--gold)'}">
+            #${p.song}
+          </span>${mesa}
+        </div>
       </div>${tag}
     </div>`;
   }).join('');
@@ -1892,30 +1911,38 @@ function updateHostMonitor() {
 /* ============================================================
    DEMO: SIM JOIN
 ============================================================ */
+const DEMO_CODES = ['042','117','203','089','156','301','077','198','015'];
 function simJoin() {
   if (!state.qrGenerated) { generateParty(); return; }
   if (state.demoCount >= SONGS_DEMO.length) return;
-  const [name, song, duet] = SONGS_DEMO[state.demoCount++];
-  addToQueue(name, song, duet);
-  showToast('👤 ' + name + ' entrou na fila','teal');
+  const [name,,duet] = SONGS_DEMO[state.demoCount];
+  const code = DEMO_CODES[state.demoCount % DEMO_CODES.length];
+  state.demoCount++;
+  addToQueue(name, code, duet);
+  showToast('👤 ' + name + ' entrou — código ' + code, 'teal');
 }
 
 /* ============================================================
    JOIN QUEUE (participant)
 ============================================================ */
 function joinQueue() {
-  const nameEl = document.getElementById('participantName');
-  const songEl = document.getElementById('participantSong');
-  const duetEl = document.getElementById('participantDuet');
-  const mesaEl = document.getElementById('participantMesa');
-  const limitW = document.getElementById('limitWarning');
-  const name = nameEl.value.trim(), song = songEl.value.trim();
-  const duet = state.settings.duet ? (duetEl?.value.trim()||'') : '';
-  const mesa = state.settings.mesa ? (mesaEl?.value.trim()||'') : '';
+  const nameEl  = document.getElementById('participantName');
+  const codeEl  = document.getElementById('participantCode');
+  const duetEl  = document.getElementById('participantDuet');
+  const mesaEl  = document.getElementById('participantMesa');
+  const limitW  = document.getElementById('limitWarning');
+  const name    = nameEl.value.trim();
+  const code    = codeEl.value.trim().toUpperCase();
+  const duet    = state.settings.duet ? (duetEl?.value.trim()||'') : '';
+  const mesa    = state.settings.mesa ? (mesaEl?.value.trim()||'') : '';
 
   nameEl.style.borderColor = name ? '' : 'var(--red)';
-  songEl.style.borderColor = song ? '' : 'var(--red)';
-  if (!name || !song) return;
+  codeEl.style.borderColor = code ? '' : 'var(--red)';
+  if (!name || !code) {
+    if (!name) nameEl.focus();
+    else codeEl.focus();
+    return;
+  }
 
   if (state.settings.songLimit > 0) {
     const count = state.personSongs[name] || 0;
@@ -1927,18 +1954,22 @@ function joinQueue() {
   limitW.classList.remove('show');
 
   if (!state.qrGenerated) {
-    state.partyName = 'Aniversário da Ana 🎉';
-    state.partyCode = 'ANI25'; state.qrGenerated = true;
+    state.partyName   = 'Festa da Copa 🏆';
+    state.partyCode   = 'COPA1'; state.qrGenerated = true;
     document.getElementById('queuePartyBadge').textContent = state.partyName;
     if (!state.queue.length) {
-      ['Carlos','Juliana','Roberto'].forEach((n,i) => addToQueue(n, SONGS_DEMO[i][1]));
+      addToQueue('Carlos', '042');
+      addToQueue('Juliana', '117');
+      addToQueue('Roberto', '203');
       state.currentSinging = 1;
     }
   }
 
-  state.myName = name; state.mySong = song;
-  addToQueue(name, song, duet, mesa);
+  state.myName = name; state.mySong = code;
+  addToQueue(name, code, duet, mesa);
   state.myIndex = state.queue.length - 1;
+  // Clear fields for next use
+  nameEl.value = ''; codeEl.value = '';
   showScreen('queue');
   renderQueue();
 }
@@ -1990,7 +2021,7 @@ function renderQueue() {
   else if (isSinging) { myPosDsp.textContent='🎤'; botName.textContent=state.myName; waitDsp.textContent='Cantando agora!'; }
   else {
     myPosDsp.textContent = '#' + Math.max(1,myPos);
-    botName.textContent  = state.myName + ' — ' + state.mySong;
+    botName.textContent  = state.myName + ' — Código #' + state.mySong;
     const wait = Math.max(0, myPos-1);
     waitDsp.textContent  = wait === 0 ? 'Próximo a cantar!' : `~${wait*4} min de espera`;
   }
@@ -2019,7 +2050,9 @@ function renderQueue() {
       <div class="entry-avatar" style="background:${p.color}22;color:${p.color}">${init}</div>
       <div class="entry-details">
         <div class="entry-name">${p.name}${p.duet?' & '+p.duet:''} ${rot}</div>
-        <div class="entry-song">🎵 ${p.song}${mesa}</div>
+        <div class="entry-song">
+          🎵 Código <span style="font-family:var(--font-t);font-size:15px;letter-spacing:2px">#${p.song}</span>${mesa}
+        </div>
       </div>${stTag}
     </div>`;
   }).join('');
@@ -2154,6 +2187,17 @@ function openWelcomeScreen() {
 
   showScreen('welcome');
   return true;
+}
+
+/* ============================================================
+   GO TO JOIN  (from welcome screen)
+============================================================ */
+function goToJoin() {
+  // Ensure join fields and labels are set
+  updateJoinScreen();
+  showScreen('join');
+  // Focus first field
+  setTimeout(() => document.getElementById('participantName')?.focus(), 200);
 }
 
 /* ============================================================
