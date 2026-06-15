@@ -711,6 +711,25 @@ html, body {
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
+<!-- Modal: Confirmar Nova Festa -->
+<div class="modal-overlay" id="newPartyModal">
+  <div class="modal">
+    <div class="modal-title" style="color:var(--gold)">⚠️ Criar Nova Festa?</div>
+    <div class="modal-body">
+      A festa <strong id="npModalName" style="color:var(--text)">—</strong> está em andamento com <strong id="npModalCount" style="color:var(--teal)">— pessoas</strong> na fila.<br><br>
+      Criar uma nova festa vai <span style="color:var(--red);font-weight:600">encerrar a festa atual</span>. Os dados ficam salvos no histórico do Supabase, mas a fila ao vivo será encerrada.
+    </div>
+    <div class="modal-actions" style="flex-direction:column;gap:8px">
+      <button class="modal-cancel" onclick="closeNewPartyModal()" style="width:100%;padding:12px;font-size:14px;font-weight:600">
+        <i class="ti ti-arrow-left"></i> Voltar — continuar a festa atual
+      </button>
+      <button class="btn-primary" onclick="closeNewPartyModal();resetParty();" style="margin-top:0;background:linear-gradient(135deg,var(--gold),#c48000);font-size:15px">
+        <i class="ti ti-refresh"></i> Encerrar e criar nova festa
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="pixModal">
   <div class="modal">
     <div class="modal-title">🟢 Furar a Fila</div>
@@ -988,7 +1007,7 @@ html, body {
           <button class="btn-sm" onclick="copyLink()"><i class="ti ti-copy"></i> Copiar link</button>
           <button class="btn-sm" onclick="simJoin()"><i class="ti ti-user-plus"></i> Simular</button>
           <button class="btn-sm" onclick="advanceQueue()"><i class="ti ti-player-skip-forward"></i> Próximo</button>
-          <button class="btn-sm danger" onclick="resetParty()"><i class="ti ti-refresh"></i> Nova festa</button>
+          <button class="btn-sm danger" onclick="confirmResetParty()"><i class="ti ti-refresh"></i> Nova festa</button>
         </div>
       </div>
 
@@ -1632,6 +1651,31 @@ function getSettings() {
    GENERATE PARTY  — salva no Supabase
 ============================================================ */
 async function generateParty() {
+  // Verifica se já tem festa ativa — protege contra geração acidental
+  if (state.qrGenerated && state.partyId) {
+    const activeCount = state.queue.filter(e => ['waiting','singing'].includes(e.status)).length;
+    document.getElementById('npModalName').textContent  = state.partyName || 'Festa atual';
+    document.getElementById('npModalCount').textContent = activeCount + (activeCount === 1 ? ' pessoa' : ' pessoas');
+    document.getElementById('newPartyModal').classList.add('show');
+    return; // Não cria nova festa até confirmar
+  }
+  await doGenerateParty();
+}
+
+function confirmResetParty() {
+  // Chamado pelo botão "Nova festa" no QR Code
+  if (!state.qrGenerated) { resetParty(); return; }
+  const activeCount = state.queue.filter(e => ['waiting','singing'].includes(e.status)).length;
+  document.getElementById('npModalName').textContent  = state.partyName || 'Festa atual';
+  document.getElementById('npModalCount').textContent = activeCount + (activeCount === 1 ? ' pessoa' : ' pessoas');
+  document.getElementById('newPartyModal').classList.add('show');
+}
+
+function closeNewPartyModal() {
+  document.getElementById('newPartyModal').classList.remove('show');
+}
+
+async function doGenerateParty() {
   const name  = document.getElementById('partyName').value.trim() || 'Minha Festa';
   const place = document.getElementById('partyPlace')?.value.trim() || '';
   state.settings = getSettings();
@@ -1660,13 +1704,22 @@ async function generateParty() {
   showCtTab('tab-comando');
 }
 
-function resetParty() {
-  if(state.realtimeSub){db.removeChannel(state.realtimeSub);state.realtimeSub=null;}
-  Object.assign(state,{partyId:'',partyName:'',partyCode:'',queue:[],currentSinging:0,
-    demoCount:0,myEntryId:null,myName:'',mySong:'',paused:false,singCount:{},personSongs:{},qrGenerated:false});
-  document.getElementById('ctSetupCard').style.display='';
+async function resetParty() {
+  // Fecha a festa atual no Supabase antes de resetar
+  if (state.partyId) {
+    await db.from('parties').update({ status:'closed', closed_at: new Date().toISOString() }).eq('id', state.partyId);
+  }
+  if (state.realtimeSub) { db.removeChannel(state.realtimeSub); state.realtimeSub = null; }
+  Object.assign(state, {
+    partyId:'', partyName:'', partyCode:'', queue:[], currentSinging:0,
+    demoCount:0, myEntryId:null, myName:'', mySong:'',
+    paused:false, singCount:{}, personSongs:{}, qrGenerated:false,
+  });
+  document.getElementById('ctSetupCard').style.display = '';
   document.getElementById('qrSection').classList.remove('show');
   updateHostMonitor();
+  showCtTab('tab-festa');
+  showToast('Festa encerrada. Configure a nova festa!', 'gold');
 }
 
 /* ============================================================
@@ -2199,5 +2252,4 @@ if (document.readyState === 'loading') {
 </script>
 </body>
 </html>
- 
- 
+
