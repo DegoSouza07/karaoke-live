@@ -1313,7 +1313,7 @@ async function doLogin() {
   btn.disabled  = true;
   try {
     // ADM
-    const { data: adm } = await db.from('adm_users').select('*').eq('username',user).eq('password',pass).single();
+    const { data: adm } = await db.from('adm_users').select('*').eq('username',user).eq('password',pass).maybeSingle();
     if (adm) {
       loggedUser = adm;
       sessionStorage.setItem('kl_auth', adm.username);
@@ -1322,7 +1322,7 @@ async function doLogin() {
       showScreen('adm'); renderAdmPanel(); return;
     }
     // Cliente
-    const { data: client } = await db.from('clients').select('*, plans(*)').eq('username',user).eq('password',pass).single();
+    const { data: client } = await db.from('clients').select('*, plans(*)').eq('username',user).eq('password',pass).maybeSingle();
     if (client) {
       if (client.status === 'suspended') { err.textContent='Conta suspensa. Entre em contato com a 4Byte.'; err.classList.add('show'); return; }
       loggedClient = client;
@@ -1528,6 +1528,68 @@ function renderPlanFeatures(client) {
   const list=features[plan]||features.basic;
   const el=document.getElementById('planFeatures'); if(!el)return;
   el.innerHTML=`<div class="account-card"><h3><i class="ti ti-sparkles"></i> Plano ${PLAN_LABELS[plan]||plan}</h3>${list.map(f=>`<div class="account-row"><span class="account-row-label">${f.name}</span><span style="color:${f.ok?'var(--green)':'var(--muted)'};font-size:17px">${f.ok?'✓':'✗'}</span></div>`).join('')}<div style="margin-top:12px;text-align:center;font-size:11px;color:var(--muted)">Upgrade: contate a 4Byte Team.</div></div>`;
+}
+
+
+/* ============================================================
+   URL HELPERS
+============================================================ */
+function getBaseUrl() {
+  return window.location.origin + window.location.pathname;
+}
+
+function getPartyUrl(code, name, place, mode) {
+  const base = getBaseUrl();
+  return `${base}?festa=${code}&n=${encodeURIComponent(name)}&m=${mode}&p=${encodeURIComponent(place||'')}`;
+}
+
+function readPartyFromUrl() {
+  const p = new URLSearchParams(window.location.search);
+  if (!p.get('festa')) return null;
+  return {
+    partyCode:  p.get('festa').toUpperCase(),
+    partyName:  decodeURIComponent(p.get('n') || 'KaraokeLive'),
+    partyPlace: decodeURIComponent(p.get('p') || ''),
+    mode:       p.get('m') || 'bar',
+  };
+}
+
+/* ============================================================
+   UI HELPERS
+============================================================ */
+function updateModeBadge() {
+  const m   = MODE_LABELS[state.mode] || MODE_LABELS['bar'];
+  const el  = document.getElementById('modeBadgeDisplay');
+  if (!el) return;
+  el.innerHTML = `<div class="mode-badge" style="font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px;background:${m.color}20;color:${m.color};border:1px solid ${m.color}40;text-transform:uppercase;letter-spacing:.8px">${m.icon} ${m.label}</div>`;
+}
+
+function updateJoinScreen() {
+  const m   = state.mode;
+  const ml  = MODE_LABELS[m] || MODE_LABELS['bar'];
+  const lbl = document.getElementById('joinModeLabel');
+  if (lbl) { lbl.textContent = ml.icon + ' ' + ml.label; lbl.className = 'join-mode-label ' + m; }
+  const mesaF = document.getElementById('mesaField');
+  const duetF = document.getElementById('duetField');
+  const pixBtn= document.getElementById('pixFureBtn');
+  if (mesaF) mesaF.style.display = (m === 'bar' && state.settings.mesa)  ? '' : 'none';
+  if (duetF) duetF.style.display = state.settings.duet ? '' : 'none';
+  if (pixBtn)pixBtn.style.display = (m === 'bar' && state.settings.pix)  ? '' : 'none';
+}
+
+/* ============================================================
+   ROTATION / DISPLAY QUEUE
+============================================================ */
+function getDisplayQueue() {
+  const active = state.queue.filter(e => ['waiting','singing'].includes(e.status));
+  if (!state.settings.rotation) return active;
+  // Singing first, then waiting sorted by how many times they appeared
+  const singing = active.filter(e => e.status === 'singing');
+  const waiting = active.filter(e => e.status === 'waiting');
+  const singMap = {};
+  singing.forEach(p => { singMap[p.name] = (singMap[p.name]||0) + 1; });
+  const sorted = [...waiting].sort((a,b) => (singMap[a.name]||0) - (singMap[b.name]||0));
+  return [...singing, ...sorted];
 }
 
 /* ============================================================
@@ -1963,7 +2025,7 @@ async function openWelcomeScreen() {
     .from('parties')
     .select('id, name, place, event_type, mode_settings, status')
     .eq('code', partyCode)
-    .single();
+    .maybeSingle();
 
   // Popula o state com dados reais (ou URL como fallback)
   state.partyCode   = partyCode;
@@ -2048,7 +2110,7 @@ async function restorePartySession() {
     .in('status', ['active','paused'])
     .order('created_at', { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (!party) return; // sem festa ativa
 
