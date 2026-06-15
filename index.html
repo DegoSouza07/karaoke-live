@@ -8,12 +8,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="KaraokeLive" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23ff3c6e'/><text y='.9em' font-size='72' x='50%' text-anchor='middle' dominant-baseline='middle' dy='0.1em'>🎤</text></svg>" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23ff3c6e'/><text y='.9em' font-size='72' x='50%' text-anchor='middle' dominant-baseline='middle' dy='0.1em'>🎤</text></svg>" />
   <title>KaraokeLive — Fila Inteligente</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <style>
 /* ============================================================
    RESET & TOKENS
@@ -700,10 +702,15 @@ html, body {
 </head>
 <body>
 
+<!-- Loading splash -->
+<div id="loadingSplash" style="position:fixed;inset:0;background:#080810;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:9999;transition:opacity .5s">
+  <div style="font-size:52px">🎤</div>
+  <div style="font-family:'Boogaloo',sans-serif;font-size:28px;background:linear-gradient(135deg,#ff3c6e,#ffb800);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">KaraokeLive</div>
+  <div style="width:40px;height:3px;background:#ff3c6e;border-radius:2px"></div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
-
-<!-- PIX Modal -->
 <div class="modal-overlay" id="pixModal">
   <div class="modal">
     <div class="modal-title">🟢 Furar a Fila</div>
@@ -1231,7 +1238,23 @@ html, body {
 ============================================================ */
 const SUPA_URL = 'https://lbdhcgjietaizzvwwihs.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxiZGhjZ2ppZXRhaXp6dnd3aWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1Mzg2NDQsImV4cCI6MjA5NzExNDY0NH0.T6amFx4_oxl9dPFu7mi8XPRMql5zYHzqpqpgBPSvsb0';
-const db = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// Inicializa db de forma segura — se o SDK não carregou, mostra erro claro
+let db;
+try {
+  if (typeof supabase === 'undefined') throw new Error('Supabase SDK não carregou');
+  db = supabase.createClient(SUPA_URL, SUPA_KEY);
+} catch(e) {
+  console.error('Erro Supabase:', e);
+  // Cria um proxy que sempre retorna estruturas seguras para evitar crash
+  const safe = () => ({ data: null, error: { message: 'SDK não carregado' }, count: 0 });
+  const chain = () => {
+    const p = Promise.resolve(safe());
+    const h = new Proxy(p, { get: (t, k) => k in p ? (typeof p[k]==='function'?p[k].bind(p):p[k]) : () => chain() });
+    return h;
+  };
+  db = new Proxy({}, { get: () => () => chain() });
+}
 
 /* ============================================================
    CONSTANTES DE UI
@@ -1336,6 +1359,9 @@ function togglePw() {
 function showScreen(s) {
   document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
   document.getElementById('screen-' + s).classList.add('active');
+  // Hide loading splash
+  const splash = document.getElementById('loadingSplash');
+  if (splash) { splash.style.opacity = '0'; setTimeout(() => splash.remove(), 500); }
 }
 function showCtTab(tabId) {
   document.querySelectorAll('.ct-panel').forEach(p => p.classList.remove('active'));
@@ -1924,40 +1950,58 @@ function drawQR(url) {
 }
 
 /* ============================================================
-   WELCOME SCREEN SETUP  — dados chegam pela URL do QR Code
+   WELCOME SCREEN SETUP  — participante chega pelo QR Code
 ============================================================ */
-function openWelcomeScreen() {
+async function openWelcomeScreen() {
   const partyData = readPartyFromUrl();
   if (!partyData) return false;
 
   const { partyCode, partyName, partyPlace, mode } = partyData;
 
-  // Store in state so joinQueue knows which party
-  state.partyCode    = partyCode;
-  state.partyName    = partyName;
-  state.mode         = mode;
-  state.qrGenerated  = true;
-  // Apply default settings for the mode
-  state.settings = {
+  // Busca o party_id real no Supabase pelo código
+  const { data: party } = await db
+    .from('parties')
+    .select('id, name, place, event_type, mode_settings, status')
+    .eq('code', partyCode)
+    .single();
+
+  // Popula o state com dados reais (ou URL como fallback)
+  state.partyCode   = partyCode;
+  state.partyName   = party?.name   || partyName;
+  state.partyId     = party?.id     || '';
+  state.mode        = party?.event_type || mode;
+  state.qrGenerated = true;
+  state.settings    = party?.mode_settings || {
     bar:  { mesa:false, rotation:true, pix:false, pixValue:5, songLimit:0, hidden:false, duet:true },
     bday: { mesa:false, rotation:true, pix:false, pixValue:5, songLimit:2, hidden:false, duet:true },
     wed:  { mesa:false, rotation:false,pix:false, pixValue:0, songLimit:1, hidden:false, duet:false },
-  }[mode] || state.settings;
+  }[state.mode] || state.settings;
 
-  // Welcome screen content
-  document.getElementById('welcomePartyName').textContent  = partyName;
-  document.getElementById('welcomePartyPlace').textContent = partyPlace;
+  const finalName  = state.partyName;
+  const finalPlace = party?.place || partyPlace;
+  const finalMode  = state.mode;
+  const m          = MODE_LABELS[finalMode] || MODE_LABELS['bar'];
+
+  // Welcome screen
+  document.getElementById('welcomePartyName').textContent  = finalName;
+  document.getElementById('welcomePartyPlace').textContent = finalPlace;
   document.getElementById('welcomeCodeBadge').textContent  = partyCode;
 
-  const m = MODE_LABELS[mode] || MODE_LABELS['bar'];
   const pill = document.getElementById('welcomeModePill');
   pill.textContent = m.icon + ' ' + m.label;
-  pill.className   = 'welcome-mode-pill ' + mode;
+  pill.className   = 'welcome-mode-pill ' + finalMode;
 
-  // Queue info from localStorage (same device as organizer) or blank
-  const queueData = loadQueueFromStorage(partyCode);
-  const waiting   = queueData ? Math.max(0, queueData.queue.length - queueData.currentSinging) : 0;
-  const waitMin   = waiting * 4;
+  // Contagem real da fila no Supabase
+  let waiting = 0;
+  if (party?.id) {
+    const { count } = await db
+      .from('queue_entries')
+      .select('*', { count:'exact', head:true })
+      .eq('party_id', party.id)
+      .in('status', ['waiting','singing']);
+    waiting = count || 0;
+  }
+  const waitMin = Math.max(0, waiting - 1) * 4;
 
   document.getElementById('welcomeQueueInfo').textContent =
     waiting === 0 ? 'Fila aberta — seja o primeiro!' :
@@ -1965,15 +2009,18 @@ function openWelcomeScreen() {
     waiting + ' pessoas na fila agora';
 
   document.getElementById('welcomeWaitInfo').textContent =
-    waitMin === 0 ? 'Você canta logo!' : `~${waitMin} min de espera estimada`;
+    waitMin === 0 ? 'Você canta logo!' : `~${waitMin} min de espera`;
 
   // Pre-fill join screen
-  document.getElementById('joinPartyLabel').textContent  = 'Festa: ' + partyName;
-  document.getElementById('queuePartyBadge').textContent = partyName;
+  document.getElementById('joinPartyLabel').textContent  = 'Festa: ' + finalName;
+  document.getElementById('queuePartyBadge').textContent = finalName;
   const jlbl = document.getElementById('joinModeLabel');
   jlbl.textContent = m.icon + ' ' + m.label;
-  jlbl.className   = 'join-mode-label ' + mode;
+  jlbl.className   = 'join-mode-label ' + finalMode;
   updateJoinScreen();
+
+  // Inscreve no realtime para ver fila atualizar
+  if (party?.id) subscribeToQueue(party.id);
 
   showScreen('welcome');
   return true;
@@ -1983,23 +2030,109 @@ function openWelcomeScreen() {
    GO TO JOIN  (from welcome screen)
 ============================================================ */
 function goToJoin() {
-  // Ensure join fields and labels are set
   updateJoinScreen();
   showScreen('join');
-  // Focus first field
   setTimeout(() => document.getElementById('participantName')?.focus(), 200);
+}
+
+/* ============================================================
+   RESTORE PARTY SESSION  — organizer reloads page
+   Busca a festa mais recente do cliente no Supabase
+============================================================ */
+async function restorePartySession() {
+  if (!loggedClient) return;
+  const { data: party } = await db
+    .from('parties')
+    .select('*')
+    .eq('client_id', loggedClient.id)
+    .in('status', ['active','paused'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!party) return; // sem festa ativa
+
+  Object.assign(state, {
+    partyId:      party.id,
+    partyName:    party.name,
+    partyCode:    party.code,
+    mode:         party.event_type,
+    settings:     party.mode_settings || state.settings,
+    paused:       party.status === 'paused',
+    qrGenerated:  true,
+  });
+
+  // Reconstrói a UI como se tivesse gerado agora
+  document.getElementById('ctSetupCard').style.display = 'none';
+  document.getElementById('qrSection').classList.add('show');
+  document.getElementById('partyCodeDisplay').textContent = party.code;
+  document.getElementById('joinPartyLabel').textContent   = 'Festa: ' + party.name;
+  document.getElementById('queuePartyBadge').textContent  = party.name;
+
+  const link = getPartyUrl(party.code, party.name, party.place || '', party.event_type);
+  document.getElementById('partyLinkDisplay').textContent = link;
+  updateModeBadge(); updateJoinScreen(); drawQR(link);
+
+  // Restaura estado de pausa
+  if (state.paused) {
+    document.getElementById('djPauseBtn')?.classList.add('paused');
+    ['djPausedBanner','hostPausedBanner'].forEach(id => document.getElementById(id)?.classList.add('show'));
+  }
+
+  subscribeToQueue(party.id);
+  await loadQueueFromDB(party.id);
+  updateDjStatus('Festa restaurada: ' + party.name);
+  showToast('✅ Festa "' + party.name + '" retomada!', 'teal');
+  showCtTab('tab-comando');
 }
 
 /* ============================================================
    INIT
 ============================================================ */
-// First check if this is a participant arriving via QR Code
-if (!openWelcomeScreen()) {
-  // Otherwise normal auth flow
-  const role = checkAuth();
-  if      (role === 'adm')    { showScreen('adm');    renderAdmPanel(); }
-  else if (role === 'client') { showScreen('client'); setupClientPanel(); }
-  else                        { showScreen('login'); }
+async function init() {
+  // Mostra login imediatamente como fallback seguro
+  // (será substituído se houver sessão ou QR Code)
+  showScreen('login');
+
+  // Verifica se Supabase SDK carregou corretamente
+  if (typeof supabase === 'undefined') {
+    const err = document.getElementById('loginError');
+    if (err) { err.textContent = '⚠️ Erro de conexão. Recarregue a página (Ctrl+Shift+R).'; err.classList.add('show'); }
+    return;
+  }
+
+  try {
+    // 1. Participante chegando pelo QR Code?
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('festa')) {
+      const isParticipant = await openWelcomeScreen();
+      if (isParticipant) return;
+    }
+
+    // 2. Sessão salva?
+    const role = checkAuth();
+    if (role === 'adm') {
+      showScreen('adm');
+      try { await renderAdmPanel(); } catch(e) { console.warn('ADM panel error:', e); }
+    } else if (role === 'client') {
+      showScreen('client');
+      setupClientPanel();
+      try { await restorePartySession(); } catch(e) { console.warn('Restore party error:', e); }
+    } else {
+      showScreen('login');
+    }
+  } catch(e) {
+    console.error('Init error:', e);
+    // Garante que a tela de login sempre aparece em caso de erro
+    showScreen('login');
+  }
+}
+
+// Garante que o DOM e os scripts externos estão prontos
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
 }
 </script>
 </body>
