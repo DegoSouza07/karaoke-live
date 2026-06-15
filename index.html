@@ -675,6 +675,26 @@ html, body {
   padding: 8px 20px; border-radius: 10px;
   border: 1px dashed rgba(255,184,0,.3);
 }
+/* DJ: Adicionar manualmente */
+.dj-add-wrap {
+  margin-top: 10px; padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.dj-add-title {
+  font-size: 12px; font-weight: 700; color: var(--teal);
+  text-transform: uppercase; letter-spacing: .8px;
+  display: flex; align-items: center; gap: 6px;
+}
+.dj-add-fields {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.dj-add-fields input {
+  width: 100%; background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 10px; color: var(--text); font-family: var(--font-b);
+  font-size: 14px; padding: 9px 13px; outline: none; transition: border-color .2s;
+}
+.dj-add-fields input:focus { border-color: var(--teal); }
   </style>
 </head>
 <body>
@@ -997,6 +1017,22 @@ html, body {
             </button>
           </div>
           <div class="dj-status" id="djStatus">— Nenhuma ação recente —</div>
+
+          <!-- DJ: Adicionar manualmente -->
+          <div class="dj-add-wrap">
+            <div class="dj-add-title"><i class="ti ti-user-plus"></i> Adicionar à Fila (sem celular)</div>
+            <div class="dj-add-fields">
+              <input type="text" id="djAddName" placeholder="Nome do participante"
+                onkeydown="if(event.key==='Enter')document.getElementById('djAddCode').focus()" />
+              <input type="text" id="djAddCode" placeholder="Código da música (ex: 042)"
+                style="font-family:var(--font-t);letter-spacing:3px;text-align:center;text-transform:uppercase"
+                maxlength="6"
+                onkeydown="if(event.key==='Enter')djAddPerson()" />
+            </div>
+            <button class="btn-primary" onclick="djAddPerson()" style="margin-top:0;font-size:15px;padding:10px">
+              <i class="ti ti-plus"></i> Adicionar na Fila
+            </button>
+          </div>
         </div>
 
         <!-- Live Queue -->
@@ -1874,6 +1910,34 @@ function rejectTop() {
   updateHostMonitor(); renderQueue();
   updateDjStatus('Removido: ' + removed.name);
   showToast('Entrada removida da fila','red');
+}
+
+/* ============================================================
+   DJ: ADICIONAR PESSOA MANUALMENTE (sem celular)
+============================================================ */
+function djAddPerson() {
+  const nameEl = document.getElementById('djAddName');
+  const codeEl = document.getElementById('djAddCode');
+  const name   = nameEl.value.trim();
+  const code   = codeEl.value.trim().toUpperCase();
+
+  nameEl.style.borderColor = name ? '' : 'var(--red)';
+  codeEl.style.borderColor = code ? '' : 'var(--red)';
+  if (!name || !code) {
+    showToast('Preencha nome e código da música','red');
+    if (!name) nameEl.focus(); else codeEl.focus();
+    return;
+  }
+
+  if (!state.qrGenerated) {
+    showToast('Gere uma festa primeiro!','red'); return;
+  }
+
+  addToQueue(name, code);
+  nameEl.value = ''; codeEl.value = '';
+  nameEl.focus();
+  updateDjStatus('DJ adicionou: ' + name + ' — #' + code);
+  showToast('✅ ' + name + ' adicionado à fila pelo DJ','teal');
 }
 
 function updateDjStatus(msg) {
