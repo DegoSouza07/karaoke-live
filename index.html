@@ -13,6 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
 /* ============================================================
    RESET & TOKENS
@@ -849,7 +850,7 @@ html, body {
       </div>
       <div style="margin-top:14px; display:flex; gap:8px">
         <button class="btn-sm" onclick="toggleNewClientForm()"><i class="ti ti-x"></i> Cancelar</button>
-        <button class="btn-primary adm" style="margin-top:0" onclick="createClient()">
+        <button class="btn-primary adm" style="margin-top:0" onclick="createNewClient()">
           <i class="ti ti-check"></i> Criar Cliente
         </button>
       </div>
@@ -1226,97 +1227,46 @@ html, body {
 
 <script>
 /* ============================================================
-   DATA — USERS & CLIENTS
-============================================================
-   Roles:
-     'adm'    → 4Byte master admin
-     'client' → contratante (bar/bday/wed)
-   
-   Plans control which modes are unlocked:
-     basic   → only the contracted mode
-     pro     → contracted mode + 1 extra
-     premium → all modes
+   SUPABASE  — configuração
 ============================================================ */
+const SUPA_URL = 'https://lbdhcgjietaizzvwwihs.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxiZGhjZ2ppZXRhaXp6dnd3aWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1Mzg2NDQsImV4cCI6MjA5NzExNDY0NH0.T6amFx4_oxl9dPFu7mi8XPRMql5zYHzqpqpgBPSvsb0';
+const db = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-const PLAN_MODES = {
-  basic:   1,   // only their own mode
-  pro:     2,   // their mode + 1 extra
-  premium: 3,   // all 3 modes
-};
-
-const PLAN_LABELS = {
-  basic:   'Basic',
-  pro:     'Pro',
-  premium: 'Premium',
-};
-
+/* ============================================================
+   CONSTANTES DE UI
+============================================================ */
+const PLAN_MODES  = { basic:1, pro:2, premium:3 };
+const PLAN_LABELS = { basic:'Basic', pro:'Pro', premium:'Premium' };
 const MODE_LABELS = {
-  bar:  { icon:'🍺', label:'Bar / Restaurante',    color:'var(--mode-bar)' },
-  bday: { icon:'🎂', label:'Aniversário / Festa',   color:'var(--mode-bday)' },
-  wed:  { icon:'💍', label:'Casamento / Corporativo', color:'var(--mode-wed)' },
+  bar:  { icon:'🍺', label:'Bar / Restaurante',      color:'var(--mode-bar)'  },
+  bday: { icon:'🎂', label:'Aniversário / Festa',     color:'var(--mode-bday)' },
+  wed:  { icon:'💍', label:'Casamento / Corporativo', color:'var(--mode-wed)'  },
 };
-
-// ADM users (4Byte internal)
-const ADM_USERS = [
-  { user: 'admin', pass: 'Byte4team', name: 'Administrador', role: 'adm' },
-  { user: 'suporte', pass: 'Byte4team', name: 'Suporte',     role: 'adm' },
-];
-
-// Clients database (managed by ADM)
-// status: 'active' | 'suspended'
-let CLIENTS = [
-  {
-    id: 'c001', user: 'bardojoao', pass: 'bar123', name: 'Bar do João',
-    owner: 'João Ferreira', type: 'bar', plan: 'pro', status: 'active',
-    role: 'client', createdAt: '2025-01-10',
-  },
-  {
-    id: 'c002', user: 'aniversarioana', pass: 'ana456', name: 'Aniversário da Ana',
-    owner: 'Ana Paula', type: 'bday', plan: 'basic', status: 'active',
-    role: 'client', createdAt: '2025-06-01',
-  },
-  {
-    id: 'c003', user: 'casamentolima', pass: 'wed789', name: 'Casamento Lima & Silva',
-    owner: 'Carlos Lima', type: 'wed', plan: 'premium', status: 'suspended',
-    role: 'client', createdAt: '2025-05-20',
-  },
-  {
-    id: 'c004', user: 'festadacopa', pass: 'copa2025', name: 'Festa da Copa',
-    owner: 'Organizador Copa', type: 'bar', plan: 'pro', status: 'active',
-    role: 'client', createdAt: '2025-06-13',
-  },
-];
-
-let ADM_LOG = [
-  { time: '14:32', msg: 'Cliente Bar do João ativado', color: 'var(--teal)' },
-  { time: '13:10', msg: 'Novo cliente cadastrado: Aniversário da Ana', color: 'var(--gold)' },
-  { time: '11:55', msg: 'Cliente Casamento Lima & Silva suspenso', color: 'var(--red)' },
-];
-
-const COLORS = ['#ff3c6e','#ffb800','#00e5c4','#a78bfa','#fb923c','#34d399','#60a5fa','#f472b6','#e879f9','#38bdf8'];
+const COLORS     = ['#ff3c6e','#ffb800','#00e5c4','#a78bfa','#fb923c','#34d399','#60a5fa','#f472b6','#e879f9','#38bdf8'];
+const DEMO_CODES = ['042','117','203','089','156','301','077','198','015'];
 const SONGS_DEMO = [
-  ['Carlos','Evidências — Chitãozinho & Xororó'],
-  ['Juliana','Bohemian Rhapsody — Queen'],
-  ['Roberto','Ai Se Eu Te Pego — Michel Teló'],
-  ['Fernanda','Shallow — Lady Gaga'],
-  ['Marcos','Garota de Ipanema — Tom Jobim'],
-  ['Larissa','Rolling in the Deep — Adele'],
-  ['Paulo','Você Não Vale Nada — Gusttavo Lima'],
-  ['Taís','My Way — Frank Sinatra'],
-  ['Diego','Evidências — Robson Viola','Ana'],
+  ['Carlos','Evidências'],['Juliana','Bohemian Rhapsody'],['Roberto','Ai Se Eu Te Pego'],
+  ['Fernanda','Shallow'],['Marcos','Garota de Ipanema'],['Larissa','Rolling in the Deep'],
+  ['Paulo','Você Não Vale Nada'],['Taís','My Way'],['Diego','Evidências','Ana'],
 ];
 
+/* ============================================================
+   ESTADO GLOBAL
+============================================================ */
 const state = {
-  partyName:'', partyCode:'', queue:[], currentSinging:0,
-  myIndex:-1, myName:'', mySong:'',
+  partyId:'', partyName:'', partyCode:'', queue:[], currentSinging:0,
+  myEntryId:null, myName:'', mySong:'',
   demoCount:0, qrGenerated:false,
   mode:'bar', paused:false,
   settings:{ mesa:true, rotation:true, pix:true, pixValue:5, songLimit:0, hidden:false, duet:true },
   singCount:{}, personSongs:{},
+  realtimeSub:null,
 };
 
-let loggedUser = null;   // ADM_USERS entry
-let loggedClient = null; // CLIENTS entry
+let loggedUser   = null;
+let loggedClient = null;
+let CLIENTS_CACHE = [];
 
 /* ============================================================
    AUTH
@@ -1324,58 +1274,52 @@ let loggedClient = null; // CLIENTS entry
 function checkAuth() {
   const s = sessionStorage.getItem('kl_auth');
   const r = sessionStorage.getItem('kl_role');
-  if (!s) return false;
-  if (r === 'adm') {
-    const f = ADM_USERS.find(u => u.user === s);
-    if (f) { loggedUser = f; return 'adm'; }
-  }
-  if (r === 'client') {
-    const f = CLIENTS.find(u => u.user === s);
-    if (f) { loggedClient = f; return 'client'; }
-  }
+  if (!s || !r) return false;
+  if (r === 'adm')    { loggedUser   = JSON.parse(sessionStorage.getItem('kl_user')||'null'); if (loggedUser)   return 'adm'; }
+  if (r === 'client') { loggedClient = JSON.parse(sessionStorage.getItem('kl_user')||'null'); if (loggedClient) return 'client'; }
   return false;
 }
 
-function doLogin() {
-  const user  = document.getElementById('loginUser').value.trim().toLowerCase();
-  const pass  = document.getElementById('loginPass').value;
-  const err   = document.getElementById('loginError');
+async function doLogin() {
+  const user = document.getElementById('loginUser').value.trim().toLowerCase();
+  const pass = document.getElementById('loginPass').value;
+  const err  = document.getElementById('loginError');
+  const btn  = document.getElementById('loginBtn');
   err.classList.remove('show');
-
-  // Check ADM first
-  const adm = ADM_USERS.find(u => u.user === user && u.pass === pass);
-  if (adm) {
-    loggedUser = adm;
-    sessionStorage.setItem('kl_auth', adm.user);
-    sessionStorage.setItem('kl_role', 'adm');
-    showScreen('adm');
-    renderAdmPanel();
-    return;
-  }
-
-  // Check clients
-  const client = CLIENTS.find(u => u.user === user && u.pass === pass);
-  if (client) {
-    if (client.status === 'suspended') {
-      err.textContent = 'Conta suspensa. Entre em contato com a 4Byte.';
-      err.classList.add('show'); return;
+  btn.innerHTML = '<i class="ti ti-loader-2"></i> Entrando...';
+  btn.disabled  = true;
+  try {
+    // ADM
+    const { data: adm } = await db.from('adm_users').select('*').eq('username',user).eq('password',pass).single();
+    if (adm) {
+      loggedUser = adm;
+      sessionStorage.setItem('kl_auth', adm.username);
+      sessionStorage.setItem('kl_role', 'adm');
+      sessionStorage.setItem('kl_user', JSON.stringify(adm));
+      showScreen('adm'); renderAdmPanel(); return;
     }
-    loggedClient = client;
-    sessionStorage.setItem('kl_auth', client.user);
-    sessionStorage.setItem('kl_role', 'client');
-    showScreen('client');
-    setupClientPanel();
-    return;
+    // Cliente
+    const { data: client } = await db.from('clients').select('*, plans(*)').eq('username',user).eq('password',pass).single();
+    if (client) {
+      if (client.status === 'suspended') { err.textContent='Conta suspensa. Entre em contato com a 4Byte.'; err.classList.add('show'); return; }
+      loggedClient = client;
+      sessionStorage.setItem('kl_auth', client.username);
+      sessionStorage.setItem('kl_role', 'client');
+      sessionStorage.setItem('kl_user', JSON.stringify(client));
+      showScreen('client'); setupClientPanel(); return;
+    }
+    err.textContent = 'Usuário ou senha incorretos.'; err.classList.add('show');
+  } catch(e) {
+    err.textContent = 'Erro de conexão. Verifique sua internet.'; err.classList.add('show');
+  } finally {
+    btn.innerHTML = '<i class="ti ti-lock-open"></i> Entrar'; btn.disabled = false;
   }
-
-  err.textContent = 'Usuário ou senha incorretos.';
-  err.classList.add('show');
 }
 
 function doLogout() {
+  if (state.realtimeSub) { db.removeChannel(state.realtimeSub); state.realtimeSub = null; }
   loggedUser = null; loggedClient = null;
-  sessionStorage.removeItem('kl_auth');
-  sessionStorage.removeItem('kl_role');
+  sessionStorage.clear();
   showScreen('login');
 }
 
@@ -1387,77 +1331,70 @@ function togglePw() {
 }
 
 /* ============================================================
-   NAVIGATION
+   NAVEGAÇÃO
 ============================================================ */
 function showScreen(s) {
   document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
   document.getElementById('screen-' + s).classList.add('active');
 }
-
 function showCtTab(tabId) {
   document.querySelectorAll('.ct-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.ct-tab').forEach(b => b.classList.remove('active'));
   document.getElementById(tabId).classList.add('active');
-  // derive button id: tab-festa -> tab-btn-festa, tab-comando -> tab-btn-comando
-  const btnId = 'tab-btn-' + tabId.replace('tab-', '');
-  const btn = document.getElementById(btnId);
+  const btn = document.getElementById('tab-btn-' + tabId.replace('tab-',''));
   if (btn) btn.classList.add('active');
 }
 
 /* ============================================================
    ADM PANEL
 ============================================================ */
-function renderAdmPanel() {
+async function renderAdmPanel() {
   document.getElementById('admUserName').textContent = loggedUser.name;
-  renderClientList();
-  renderAdmLog();
-  updateAdmStats();
+  await loadClientsFromDB();
+  renderClientList(); renderAdmLog(); updateAdmStats();
+}
+
+async function loadClientsFromDB() {
+  const { data } = await db.from('clients').select('*, plans(*)').order('created_at',{ascending:false});
+  CLIENTS_CACHE = data || [];
 }
 
 function updateAdmStats() {
-  const total     = CLIENTS.length;
-  const active    = CLIENTS.filter(c => c.status === 'active').length;
-  const suspended = CLIENTS.filter(c => c.status === 'suspended').length;
-  document.getElementById('statTotal').textContent     = total;
-  document.getElementById('statActive').textContent    = active;
-  document.getElementById('statSuspended').textContent = suspended;
+  document.getElementById('statTotal').textContent     = CLIENTS_CACHE.length;
+  document.getElementById('statActive').textContent    = CLIENTS_CACHE.filter(c=>c.status==='active').length;
+  document.getElementById('statSuspended').textContent = CLIENTS_CACHE.filter(c=>c.status==='suspended').length;
 }
 
 function renderClientList() {
   const container = document.getElementById('clientList');
-  if (!CLIENTS.length) {
-    container.innerHTML = '<div class="empty-msg" style="padding:20px 0">Nenhum cliente cadastrado.</div>';
-    return;
-  }
-  container.innerHTML = CLIENTS.map(c => {
-    const m = MODE_LABELS[c.type];
-    const statusCls = c.status === 'active' ? 'badge-active' : 'badge-suspended';
-    const statusTxt = c.status === 'active' ? '● Ativo' : '● Suspenso';
-    const planCls   = 'plan-' + c.plan;
-    const cardCls   = c.status === 'suspended' ? 'client-card suspended' : 'client-card';
-    const avatarCls = 'client-avatar ' + c.type;
-    return `<div class="${cardCls}" id="ccard-${c.id}">
+  if (!CLIENTS_CACHE.length) { container.innerHTML='<div class="empty-msg" style="padding:20px 0">Nenhum cliente cadastrado.</div>'; return; }
+  container.innerHTML = CLIENTS_CACHE.map(c => {
+    const m       = MODE_LABELS[c.event_type] || MODE_LABELS['bar'];
+    const planLbl = c.plans?.label || c.plan_id;
+    const stCls   = c.status==='active' ? 'badge-active' : 'badge-suspended';
+    const stTxt   = c.status==='active' ? '● Ativo' : '● Suspenso';
+    const cardCls = c.status==='suspended' ? 'client-card suspended' : 'client-card';
+    return `<div class="${cardCls}">
       <div class="client-card-top">
-        <div class="${avatarCls}">${m.icon}</div>
+        <div class="client-avatar ${c.event_type}">${m.icon}</div>
         <div class="client-info">
           <div class="client-name">${c.name}</div>
           <div class="client-meta">
-            <span class="pill ${statusCls}" style="font-size:10px;padding:2px 8px">${statusTxt}</span>
-            <span class="plan-badge ${planCls}">${PLAN_LABELS[c.plan]}</span>
+            <span class="pill ${stCls}" style="font-size:10px;padding:2px 8px">${stTxt}</span>
+            <span class="plan-badge plan-${c.plan_id}">${planLbl}</span>
             <span style="font-size:11px">${m.label}</span>
           </div>
           <div class="client-meta" style="margin-top:4px;font-size:11px">
             <i class="ti ti-user" style="font-size:11px"></i> ${c.owner}
             &nbsp;·&nbsp;
-            <i class="ti ti-key" style="font-size:11px"></i> ${c.user}
+            <i class="ti ti-key" style="font-size:11px"></i> ${c.username}
           </div>
         </div>
       </div>
       <div class="client-actions">
-        ${c.status === 'active'
+        ${c.status==='active'
           ? `<button class="btn-sm suspend" onclick="suspendClient('${c.id}')"><i class="ti ti-player-pause"></i> Suspender</button>`
-          : `<button class="btn-sm adm-btn" onclick="activateClient('${c.id}')"><i class="ti ti-player-play"></i> Ativar</button>`
-        }
+          : `<button class="btn-sm adm-btn" onclick="activateClient('${c.id}')"><i class="ti ti-player-play"></i> Ativar</button>`}
         <button class="btn-sm" onclick="changePlan('${c.id}')"><i class="ti ti-arrows-exchange"></i> Plano</button>
         <button class="btn-sm danger" onclick="deleteClient('${c.id}')"><i class="ti ti-trash"></i> Excluir</button>
       </div>
@@ -1465,516 +1402,320 @@ function renderClientList() {
   }).join('');
 }
 
-function suspendClient(id) {
-  const c = CLIENTS.find(x => x.id === id);
-  if (!c) return;
-  c.status = 'suspended';
-  addAdmLog('Cliente suspenso: ' + c.name, 'var(--red)');
-  renderClientList(); updateAdmStats();
-  showToast('⏸ ' + c.name + ' suspenso', 'gold');
+async function suspendClient(id) {
+  await db.from('clients').update({status:'suspended'}).eq('id',id);
+  await addAdmLog('Cliente suspenso: '+(CLIENTS_CACHE.find(c=>c.id===id)?.name||id));
+  await loadClientsFromDB(); renderClientList(); updateAdmStats(); showToast('⏸ Cliente suspenso','gold');
 }
-
-function activateClient(id) {
-  const c = CLIENTS.find(x => x.id === id);
-  if (!c) return;
-  c.status = 'active';
-  addAdmLog('Cliente ativado: ' + c.name, 'var(--teal)');
-  renderClientList(); updateAdmStats();
-  showToast('✅ ' + c.name + ' ativado', 'teal');
+async function activateClient(id) {
+  await db.from('clients').update({status:'active'}).eq('id',id);
+  await addAdmLog('Cliente ativado: '+(CLIENTS_CACHE.find(c=>c.id===id)?.name||id));
+  await loadClientsFromDB(); renderClientList(); updateAdmStats(); showToast('✅ Cliente ativado','teal');
 }
-
-function deleteClient(id) {
-  const c = CLIENTS.find(x => x.id === id);
-  if (!c) return;
-  if (!confirm('Excluir cliente "' + c.name + '"?')) return;
-  CLIENTS = CLIENTS.filter(x => x.id !== id);
-  addAdmLog('Cliente excluído: ' + c.name, 'var(--red)');
-  renderClientList(); updateAdmStats();
-  showToast('🗑 Cliente removido', 'red');
+async function deleteClient(id) {
+  const c = CLIENTS_CACHE.find(x=>x.id===id);
+  if (!confirm('Excluir "' + (c?.name||id) + '"?')) return;
+  await db.from('clients').delete().eq('id',id);
+  await addAdmLog('Cliente excluído: '+(c?.name||id));
+  await loadClientsFromDB(); renderClientList(); updateAdmStats(); showToast('🗑 Removido','red');
 }
-
-function changePlan(id) {
-  const c = CLIENTS.find(x => x.id === id);
-  if (!c) return;
-  const plans = ['basic','pro','premium'];
-  const current = plans.indexOf(c.plan);
-  const next = plans[(current + 1) % plans.length];
-  c.plan = next;
-  addAdmLog('Plano alterado: ' + c.name + ' → ' + PLAN_LABELS[next], 'var(--gold)');
-  renderClientList();
-  showToast('🔄 Plano alterado para ' + PLAN_LABELS[next], 'gold');
+async function changePlan(id) {
+  const c = CLIENTS_CACHE.find(x=>x.id===id); if(!c) return;
+  const plans=['basic','pro','premium'];
+  const next = plans[(plans.indexOf(c.plan_id)+1)%plans.length];
+  await db.from('clients').update({plan_id:next}).eq('id',id);
+  await addAdmLog('Plano: '+c.name+' → '+PLAN_LABELS[next]);
+  await loadClientsFromDB(); renderClientList(); showToast('🔄 Plano → '+PLAN_LABELS[next],'gold');
 }
-
 function toggleNewClientForm() {
-  const f = document.getElementById('newClientForm');
-  f.style.display = f.style.display === 'none' ? '' : 'none';
+  const f=document.getElementById('newClientForm'); f.style.display = f.style.display==='none'?'':'none';
 }
-
-function createClient() {
+async function createNewClient() {
   const name  = document.getElementById('ncName').value.trim();
   const owner = document.getElementById('ncOwner').value.trim();
   const user  = document.getElementById('ncUser').value.trim().toLowerCase().replace(/\s+/g,'_');
   const pass  = document.getElementById('ncPass').value.trim();
   const type  = document.getElementById('ncType').value;
   const plan  = document.getElementById('ncPlan').value;
-
-  if (!name || !owner || !user || !pass) { showToast('Preencha todos os campos', 'red'); return; }
-  if (CLIENTS.find(c => c.user === user) || ADM_USERS.find(u => u.user === user)) {
-    showToast('Usuário já existe', 'red'); return;
-  }
-
-  const newClient = {
-    id: 'c' + Date.now(), user, pass, name, owner, type, plan,
-    status: 'active', role: 'client',
-    createdAt: new Date().toISOString().slice(0,10),
-  };
-  CLIENTS.push(newClient);
-  addAdmLog('Novo cliente cadastrado: ' + name, 'var(--gold)');
-  renderClientList(); updateAdmStats();
-  toggleNewClientForm();
-  // Clear form
-  ['ncName','ncOwner','ncUser','ncPass'].forEach(id => document.getElementById(id).value = '');
-  showToast('✅ Cliente ' + name + ' criado!', 'teal');
+  if (!name||!owner||!user||!pass) { showToast('Preencha todos os campos','red'); return; }
+  const {error} = await db.from('clients').insert({name,owner,username:user,password:pass,event_type:type,plan_id:plan,status:'active'});
+  if (error) { showToast(error.code==='23505'?'Usuário já existe':'Erro ao criar','red'); return; }
+  await addAdmLog('Novo cliente: '+name);
+  await loadClientsFromDB(); renderClientList(); updateAdmStats(); toggleNewClientForm();
+  ['ncName','ncOwner','ncUser','ncPass'].forEach(id=>document.getElementById(id).value='');
+  showToast('✅ '+name+' criado!','teal');
 }
-
-function addAdmLog(msg, color) {
-  const now = new Date();
-  const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-  ADM_LOG.unshift({ time, msg, color });
-  if (ADM_LOG.length > 30) ADM_LOG.pop();
+async function addAdmLog(msg) {
+  await db.from('adm_log').insert({adm_user:loggedUser?.name||'sistema',action:msg});
   renderAdmLog();
 }
-
-function renderAdmLog() {
-  const list = document.getElementById('admLog');
-  list.innerHTML = ADM_LOG.map(l => `
-    <div class="log-entry">
-      <span class="log-dot" style="background:${l.color}"></span>
-      <span class="log-msg">${l.msg}</span>
-      <span class="log-time">${l.time}</span>
-    </div>`).join('');
+async function renderAdmLog() {
+  const {data} = await db.from('adm_log').select('*').order('created_at',{ascending:false}).limit(20);
+  const list = document.getElementById('admLog'); if(!list) return;
+  list.innerHTML = (data||[]).map(l=>{
+    const t = new Date(l.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    return `<div class="log-entry"><span class="log-dot" style="background:var(--teal)"></span><span class="log-msg">${l.action}</span><span class="log-time">${t}</span></div>`;
+  }).join('') || '<div style="color:var(--muted);font-size:13px;padding:8px">Sem atividades.</div>';
 }
 
 /* ============================================================
-   CLIENT PANEL  SETUP
+   CLIENT PANEL
 ============================================================ */
 function setupClientPanel() {
   const c = loggedClient;
   document.getElementById('ctClientLabel').textContent = c.name;
   document.getElementById('ctUserName').textContent    = c.owner;
-
-  // Conta tab
-  document.getElementById('acctName').textContent  = c.name;
-  document.getElementById('acctOwner').textContent = c.owner;
-  document.getElementById('acctUser').textContent  = c.user;
-  document.getElementById('acctPlan').innerHTML    = `<span class="plan-badge plan-${c.plan}">${PLAN_LABELS[c.plan]}</span>`;
-  document.getElementById('acctType').textContent  = MODE_LABELS[c.type].icon + ' ' + MODE_LABELS[c.type].label;
-  document.getElementById('acctStatus').innerHTML  = `<span class="pill badge-active" style="font-size:10px;padding:2px 8px">● Ativo</span>`;
-
-  // Determine unlocked modes based on plan
-  const unlockedModes = getUnlockedModes(c);
-  document.getElementById('acctModes').textContent = unlockedModes.map(m => MODE_LABELS[m].icon + ' ' + MODE_LABELS[m].label).join('  ·  ');
-
-  // Set mode selector — lock unavailable modes
-  setupModeSelector(c, unlockedModes);
-
-  // Default to the client's own type
-  selectMode(c.type);
-
-  // Plan features info
+  document.getElementById('acctName').textContent      = c.name;
+  document.getElementById('acctOwner').textContent     = c.owner;
+  document.getElementById('acctUser').textContent      = c.username;
+  document.getElementById('acctPlan').innerHTML        = `<span class="plan-badge plan-${c.plan_id}">${PLAN_LABELS[c.plan_id]||c.plan_id}</span>`;
+  document.getElementById('acctType').textContent      = (MODE_LABELS[c.event_type]?.icon||'')+ ' '+(MODE_LABELS[c.event_type]?.label||c.event_type);
+  document.getElementById('acctStatus').innerHTML      = `<span class="pill badge-active" style="font-size:10px;padding:2px 8px">● Ativo</span>`;
+  const unlocked = getUnlockedModes(c);
+  document.getElementById('acctModes').textContent = unlocked.map(m=>MODE_LABELS[m]?.icon+' '+MODE_LABELS[m]?.label).join('  ·  ');
+  setupModeSelector(c, unlocked);
+  selectMode(c.event_type);
   renderPlanFeatures(c);
 }
-
-function getUnlockedModes(client) {
-  const allModes = ['bar','bday','wed'];
-  const slots = PLAN_MODES[client.plan] || 1;
-  // Always include own type first
-  const ownIdx = allModes.indexOf(client.type);
-  const result = [client.type];
-  let added = 1;
-  for (let i = 0; i < allModes.length && added < slots; i++) {
-    if (allModes[i] !== client.type) { result.push(allModes[i]); added++; }
-  }
-  return result;
+function getUnlockedModes(c) {
+  const all=['bar','bday','wed'], slots=PLAN_MODES[c.plan_id]||1, res=[c.event_type];
+  let added=1;
+  for (const m of all) { if(m!==c.event_type && added<slots){res.push(m);added++;} }
+  return res;
 }
-
-function setupModeSelector(client, unlockedModes) {
-  const allModes = ['bar','bday','wed'];
-  allModes.forEach(m => {
-    const btn = document.getElementById('modeBtn-' + m);
-    if (!btn) return;
-    const isUnlocked = unlockedModes.includes(m);
-    // Remove existing lock overlays
-    btn.querySelectorAll('.lock-overlay').forEach(el => el.remove());
-    if (isUnlocked) {
-      btn.classList.remove('locked');
-    } else {
-      btn.classList.add('locked');
-      const lockEl = document.createElement('span');
-      lockEl.className = 'lock-overlay';
-      lockEl.innerHTML = '<i class="ti ti-lock"></i>';
-      btn.appendChild(lockEl);
-    }
+function setupModeSelector(client, unlocked) {
+  ['bar','bday','wed'].forEach(m=>{
+    const btn=document.getElementById('modeBtn-'+m); if(!btn)return;
+    btn.querySelectorAll('.lock-overlay').forEach(el=>el.remove());
+    if(unlocked.includes(m)){btn.classList.remove('locked');}
+    else{btn.classList.add('locked');const el=document.createElement('span');el.className='lock-overlay';el.innerHTML='<i class="ti ti-lock"></i>';btn.appendChild(el);}
   });
-  // Show note if any locked
-  const hasLocked = allModes.some(m => !unlockedModes.includes(m));
-  document.getElementById('modeLockedNote').style.display = hasLocked ? '' : 'none';
+  document.getElementById('modeLockedNote').style.display=['bar','bday','wed'].some(m=>!unlocked.includes(m))?'':'none';
 }
-
 function renderPlanFeatures(client) {
-  const container = document.getElementById('planFeatures');
-  const plan = client.plan;
-  const features = {
-    basic: [
-      { name:'1 Modo de Evento', ok:true },
-      { name:'Fila em tempo real', ok:true },
-      { name:'Painel DJ', ok:true },
-      { name:'Múltiplos Modos', ok:false },
-      { name:'Furar fila via Pix', ok:false },
-      { name:'Relatórios', ok:false },
-    ],
-    pro: [
-      { name:'2 Modos de Evento', ok:true },
-      { name:'Fila em tempo real', ok:true },
-      { name:'Painel DJ', ok:true },
-      { name:'Furar fila via Pix', ok:true },
-      { name:'Duetos', ok:true },
-      { name:'Relatórios', ok:false },
-    ],
-    premium: [
-      { name:'Todos os Modos', ok:true },
-      { name:'Fila em tempo real', ok:true },
-      { name:'Painel DJ', ok:true },
-      { name:'Furar fila via Pix', ok:true },
-      { name:'Duetos', ok:true },
-      { name:'Relatórios avançados', ok:true },
-    ],
+  const plan=client.plan_id;
+  const features={
+    basic:[{name:'1 Modo',ok:true},{name:'Fila Realtime',ok:true},{name:'Painel DJ',ok:true},{name:'Múltiplos Modos',ok:false},{name:'Pix',ok:false},{name:'Relatórios',ok:false}],
+    pro:[{name:'2 Modos',ok:true},{name:'Fila Realtime',ok:true},{name:'Painel DJ',ok:true},{name:'Pix',ok:true},{name:'Duetos',ok:true},{name:'Relatórios',ok:false}],
+    premium:[{name:'Todos os Modos',ok:true},{name:'Fila Realtime',ok:true},{name:'Painel DJ',ok:true},{name:'Pix',ok:true},{name:'Duetos',ok:true},{name:'Relatórios',ok:true}],
   };
-  const list = features[plan] || features.basic;
-  container.innerHTML = `
-    <div class="account-card">
-      <h3><i class="ti ti-sparkles"></i> Recursos do Plano ${PLAN_LABELS[plan]}</h3>
-      ${list.map(f => `
-        <div class="account-row">
-          <span class="account-row-label">${f.name}</span>
-          <span style="color:${f.ok ? 'var(--green)' : 'var(--muted)'}; font-size:17px">${f.ok ? '✓' : '✗'}</span>
-        </div>`).join('')}
-      <div style="margin-top:12px;text-align:center">
-        <div style="font-size:11px;color:var(--muted)">Para fazer upgrade, entre em contato com a 4Byte Team.</div>
-      </div>
-    </div>`;
+  const list=features[plan]||features.basic;
+  const el=document.getElementById('planFeatures'); if(!el)return;
+  el.innerHTML=`<div class="account-card"><h3><i class="ti ti-sparkles"></i> Plano ${PLAN_LABELS[plan]||plan}</h3>${list.map(f=>`<div class="account-row"><span class="account-row-label">${f.name}</span><span style="color:${f.ok?'var(--green)':'var(--muted)'};font-size:17px">${f.ok?'✓':'✗'}</span></div>`).join('')}<div style="margin-top:12px;text-align:center;font-size:11px;color:var(--muted)">Upgrade: contate a 4Byte Team.</div></div>`;
 }
 
 /* ============================================================
    MODE SELECTION
 ============================================================ */
 function selectMode(m) {
-  state.mode = m;
-  ['bar','bday','wed'].forEach(x => {
-    const btn = document.getElementById('modeBtn-' + x);
-    if (!btn) return;
-    // Preserve locked class, just update active
-    const isLocked = btn.classList.contains('locked');
-    btn.className = 'mode-btn' + (isLocked ? ' locked' : '') + (x === m ? ' active-' + x : '');
-    if (isLocked) {
-      if (!btn.querySelector('.lock-overlay')) {
-        const lockEl = document.createElement('span');
-        lockEl.className = 'lock-overlay';
-        lockEl.innerHTML = '<i class="ti ti-lock"></i>';
-        btn.appendChild(lockEl);
-      }
-    }
-    const s = document.getElementById('settings-' + x);
-    if (s) s.classList.toggle('show', x === m);
+  state.mode=m;
+  ['bar','bday','wed'].forEach(x=>{
+    const btn=document.getElementById('modeBtn-'+x); if(!btn)return;
+    const locked=btn.classList.contains('locked');
+    btn.className='mode-btn'+(locked?' locked':'')+(x===m?' active-'+x:'');
+    if(locked&&!btn.querySelector('.lock-overlay')){const el=document.createElement('span');el.className='lock-overlay';el.innerHTML='<i class="ti ti-lock"></i>';btn.appendChild(el);}
+    const s=document.getElementById('settings-'+x); if(s) s.classList.toggle('show',x===m);
   });
 }
-
 function getSettings() {
-  if (state.mode === 'bar') return {
-    mesa:     document.getElementById('tog-mesa')?.checked ?? true,
-    rotation: document.getElementById('tog-rotation')?.checked ?? true,
-    pix:      document.getElementById('tog-pix')?.checked ?? false,
-    pixValue: parseFloat(document.getElementById('pixValue')?.value) || 5,
-    songLimit: 0, hidden: false,
-    duet:     document.getElementById('tog-duet')?.checked ?? true,
+  if(state.mode==='bar') return {
+    mesa:document.getElementById('tog-mesa')?.checked??true,
+    rotation:document.getElementById('tog-rotation')?.checked??true,
+    pix:document.getElementById('tog-pix')?.checked??false,
+    pixValue:parseFloat(document.getElementById('pixValue')?.value)||5,
+    songLimit:0,hidden:false,
+    duet:document.getElementById('tog-duet')?.checked??true,
   };
-  if (state.mode === 'bday') return {
-    mesa: false,
-    rotation: document.getElementById('tog-rotation-bday')?.checked ?? true,
-    pix: false, pixValue: 5,
-    songLimit: parseInt(document.getElementById('songLimit')?.value) || 2,
-    hidden: false,
-    duet: document.getElementById('tog-duet')?.checked ?? true,
+  if(state.mode==='bday') return {
+    mesa:false,rotation:document.getElementById('tog-rotation-bday')?.checked??true,
+    pix:false,pixValue:5,
+    songLimit:parseInt(document.getElementById('songLimit')?.value)||2,
+    hidden:false,duet:document.getElementById('tog-duet')?.checked??true,
   };
-  if (state.mode === 'wed') return {
-    mesa: false, rotation: false, pix: false, pixValue: 0,
-    songLimit: parseInt(document.getElementById('wedSongLimit')?.value) || 1,
-    hidden: document.getElementById('tog-hidden')?.checked ?? true,
-    duet: document.getElementById('tog-duet')?.checked ?? true,
-  };
-  return state.settings;
-}
-
-/* ============================================================
-   PARTY DATA IN URL  — sem banco de dados, sem localStorage
-   O QR Code carrega os dados da festa na própria URL:
-   ?festa=CODIGO&n=NomeDaFesta&m=bar&p=Local
-   Assim qualquer dispositivo que escaneia recebe os dados.
-============================================================ */
-function getPartyUrl(code) {
-  const base  = window.location.origin + window.location.pathname;
-  const name  = encodeURIComponent(state.partyName);
-  const place = encodeURIComponent(document.getElementById('partyPlace')?.value || '');
-  const mode  = state.mode;
-  return `${base}?festa=${code}&n=${name}&m=${mode}&p=${place}`;
-}
-
-function readPartyFromUrl() {
-  const p = new URLSearchParams(window.location.search);
-  if (!p.get('festa')) return null;
   return {
-    partyCode:  p.get('festa').toUpperCase(),
-    partyName:  decodeURIComponent(p.get('n') || 'KaraokeLive'),
-    partyPlace: decodeURIComponent(p.get('p') || ''),
-    mode:       p.get('m') || 'bar',
+    mesa:false,rotation:false,pix:false,pixValue:0,
+    songLimit:parseInt(document.getElementById('wedSongLimit')?.value)||1,
+    hidden:document.getElementById('tog-hidden')?.checked??true,
+    duet:document.getElementById('tog-duet')?.checked??true,
   };
 }
 
 /* ============================================================
-   QUEUE SYNC via localStorage  (mesmo dispositivo / mesma aba)
-   A fila em si ainda vive em memória — para sincronizar entre
-   dispositivos em tempo real seria necessário um backend.
-   Por ora o organizador vê a fila no próprio dispositivo.
+   GENERATE PARTY  — salva no Supabase
 ============================================================ */
-function saveQueueToStorage() {
-  if (!state.partyCode) return;
-  try {
-    localStorage.setItem('kl_queue_' + state.partyCode, JSON.stringify({
-      queue:          state.queue,
-      currentSinging: state.currentSinging,
-      paused:         state.paused,
-      ts:             Date.now(),
-    }));
-  } catch(e) {}
-}
-
-function loadQueueFromStorage(code) {
-  try {
-    const raw = localStorage.getItem('kl_queue_' + code);
-    if (!raw) return null;
-    const d = JSON.parse(raw);
-    if (Date.now() - d.ts > 86400000) return null;
-    return d;
-  } catch(e) { return null; }
-}
-
-/* ============================================================
-   URL HELPERS (base)
-============================================================ */
-function getBaseUrl() {
-  return window.location.origin + window.location.pathname;
-}
-
-/* ============================================================
-   GENERATE PARTY
-============================================================ */
-function generateParty() {
-  const name = document.getElementById('partyName').value.trim() || 'Minha Festa';
+async function generateParty() {
+  const name  = document.getElementById('partyName').value.trim() || 'Minha Festa';
+  const place = document.getElementById('partyPlace')?.value.trim() || '';
   state.settings = getSettings();
-  Object.assign(state, {
-    partyName: name,
-    partyCode: Math.random().toString(36).substring(2,7).toUpperCase(),
-    queue:[], currentSinging:0, demoCount:0, myIndex:-1,
-    paused:false, singCount:{}, personSongs:{},
-    qrGenerated: true,
+  const code = Math.random().toString(36).substring(2,7).toUpperCase();
+  const {data:party, error} = await db.from('parties').insert({
+    code, client_id:loggedClient.id, name, place,
+    event_type:state.mode, mode_settings:state.settings, status:'active',
+  }).select().single();
+  if(error){showToast('Erro ao criar festa: '+error.message,'red');return;}
+  Object.assign(state,{
+    partyId:party.id,partyName:name,partyCode:code,
+    queue:[],currentSinging:0,demoCount:0,myEntryId:null,
+    paused:false,singCount:{},personSongs:{},qrGenerated:true,
   });
-
-  document.getElementById('ctSetupCard').style.display = 'none';
+  document.getElementById('ctSetupCard').style.display='none';
   document.getElementById('qrSection').classList.add('show');
-  document.getElementById('partyCodeDisplay').textContent = state.partyCode;
-  document.getElementById('joinPartyLabel').textContent   = 'Festa: ' + name;
-  document.getElementById('queuePartyBadge').textContent  = name;
-
-  const link = getPartyUrl(state.partyCode);
-  document.getElementById('partyLinkDisplay').textContent = link;
-  updateModeBadge();
-  updateJoinScreen();
-  drawQR(link);
-  updateHostMonitor();
+  document.getElementById('partyCodeDisplay').textContent=code;
+  document.getElementById('joinPartyLabel').textContent='Festa: '+name;
+  document.getElementById('queuePartyBadge').textContent=name;
+  const link=getPartyUrl(code,name,place,state.mode);
+  document.getElementById('partyLinkDisplay').textContent=link;
+  updateModeBadge();updateJoinScreen();drawQR(link);
+  subscribeToQueue(party.id);
   updateDjStatus('Festa iniciada! Aguardando participantes.');
-  showToast('🎉 Festa criada! Compartilhe o QR Code.', 'teal');
-  // Go straight to command center
+  showToast('🎉 Festa criada! Compartilhe o QR Code.','teal');
   showCtTab('tab-comando');
 }
 
 function resetParty() {
-  Object.assign(state, {
-    partyName:'', partyCode:'', queue:[], currentSinging:0, demoCount:0,
-    myIndex:-1, myName:'', mySong:'', paused:false, singCount:{}, personSongs:{},
-    qrGenerated:false,
-  });
-  document.getElementById('ctSetupCard').style.display = '';
+  if(state.realtimeSub){db.removeChannel(state.realtimeSub);state.realtimeSub=null;}
+  Object.assign(state,{partyId:'',partyName:'',partyCode:'',queue:[],currentSinging:0,
+    demoCount:0,myEntryId:null,myName:'',mySong:'',paused:false,singCount:{},personSongs:{},qrGenerated:false});
+  document.getElementById('ctSetupCard').style.display='';
   document.getElementById('qrSection').classList.remove('show');
   updateHostMonitor();
 }
 
-function updateModeBadge() {
-  const m = MODE_LABELS[state.mode];
-  document.getElementById('modeBadgeDisplay').innerHTML =
-    `<div class="mode-badge" style="font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px;background:${m.color}20;color:${m.color};border:1px solid ${m.color}40;text-transform:uppercase;letter-spacing:.8px">${m.icon} ${m.label}</div>`;
+/* ============================================================
+   REALTIME  — escuta fila em tempo real
+============================================================ */
+function subscribeToQueue(partyId) {
+  if(state.realtimeSub) db.removeChannel(state.realtimeSub);
+  state.realtimeSub = db.channel('queue-'+partyId)
+    .on('postgres_changes',{event:'*',schema:'public',table:'queue_entries',filter:`party_id=eq.${partyId}`},
+      ()=>loadQueueFromDB(partyId))
+    .subscribe();
 }
 
-function updateJoinScreen() {
-  const m = state.mode;
-  const lbl = document.getElementById('joinModeLabel');
-  lbl.textContent = MODE_LABELS[m].icon + ' ' + MODE_LABELS[m].label;
-  lbl.className = 'join-mode-label ' + m;
-  document.getElementById('mesaField').style.display  = (m === 'bar' && state.settings.mesa)  ? '' : 'none';
-  document.getElementById('duetField').style.display  = state.settings.duet ? '' : 'none';
-  document.getElementById('pixFureBtn').style.display = (m === 'bar' && state.settings.pix)   ? '' : 'none';
+async function loadQueueFromDB(partyId) {
+  const pid=partyId||state.partyId; if(!pid)return;
+  const {data} = await db.from('queue_entries').select('*')
+    .eq('party_id',pid).in('status',['waiting','singing']).order('position',{ascending:true});
+  state.queue=(data||[]).map((e,i)=>({
+    id:e.id,dbId:e.id,name:e.participant,song:e.music_code,
+    duet:e.duet_partner||'',mesa:e.table_num||'',
+    status:e.status,addedBy:e.added_by,color:COLORS[i%COLORS.length],
+  }));
+  const sIdx=state.queue.findIndex(e=>e.status==='singing');
+  state.currentSinging=sIdx>=0?sIdx+1:0;
+  if(state.myEntryId) state.myIndex=state.queue.findIndex(e=>e.dbId===state.myEntryId);
+  updateHostMonitor();renderQueue();
 }
 
 /* ============================================================
    QUEUE MANAGEMENT
 ============================================================ */
-function addToQueue(name, song, duet, mesa) {
-  state.queue.push({
-    name, song,
-    duet: duet || '', mesa: mesa || '',
-    color: COLORS[state.queue.length % COLORS.length],
-    id: Date.now() + Math.random(),
-  });
-  if (!state.personSongs[name]) state.personSongs[name] = 0;
+async function addToQueue(name,code,duet,mesa,addedBy) {
+  if(!state.partyId){showToast('Nenhuma festa ativa!','red');return null;}
+  const {data:posData}=await db.rpc('next_queue_position',{p_party_id:state.partyId});
+  const position=posData||(state.queue.length+1);
+  const {data:entry,error}=await db.from('queue_entries').insert({
+    party_id:state.partyId,participant:name,music_code:code,
+    duet_partner:duet||null,table_num:mesa||null,
+    position,status:'waiting',added_by:addedBy||'participant',
+  }).select().single();
+  if(error){console.error(error);return null;}
+  if(!state.personSongs[name])state.personSongs[name]=0;
   state.personSongs[name]++;
-  updateHostMonitor();
+  return entry;
 }
 
-function getDisplayQueue() {
-  if (!state.settings.rotation) return state.queue;
-  const cur = state.currentSinging;
-  const past = state.queue.slice(0, cur);
-  const singing = state.queue.slice(cur, cur + 1);
-  const waiting = state.queue.slice(cur + 1);
-  const singMap = {};
-  past.forEach(p => { singMap[p.name] = (singMap[p.name]||0)+1; });
-  if (singing.length) singMap[singing[0].name] = (singMap[singing[0].name]||0)+1;
-  const sorted = [...waiting].sort((a,b) => (singMap[a.name]||0) - (singMap[b.name]||0));
-  return [...past, ...singing, ...sorted];
+async function advanceQueue() {
+  if(state.paused){showToast('Fila pausada!','gold');return;}
+  if(!state.partyId)return;
+  const singing=state.queue.find(e=>e.status==='singing');
+  if(singing) await db.from('queue_entries').update({status:'done'}).eq('id',singing.dbId);
+  const next=state.queue.find(e=>e.status==='waiting');
+  if(next){
+    await db.from('queue_entries').update({status:'singing'}).eq('id',next.dbId);
+    updateDjStatus('Cantando: '+next.name+' — #'+next.song);
+    if(next.duet) showToast('🎤 Dueto: '+next.name+' & '+next.duet,'teal');
+  } else {updateDjStatus('Fila vazia!');showToast('Fila vazia!','gold');}
+  await loadQueueFromDB();
 }
 
-function advanceQueue() {
-  if (state.paused) { showToast('Fila pausada! Retome antes de avançar.','gold'); return; }
-  if (state.currentSinging >= state.queue.length) return;
-  const prev = state.queue[state.currentSinging - 1];
-  if (prev) state.singCount[prev.name] = (state.singCount[prev.name]||0)+1;
-  state.currentSinging = Math.min(state.currentSinging+1, state.queue.length);
-  const current = state.queue[state.currentSinging - 1];
-  updateHostMonitor(); renderQueue();
-  updateDjStatus('Próximo chamado: ' + (current ? current.name : '—'));
-  if (current?.duet) showToast('🎤 Dueto: ' + current.name + ' & ' + current.duet, 'teal');
+async function skipCurrent() {
+  const singing=state.queue.find(e=>e.status==='singing'); if(!singing)return;
+  await db.from('queue_entries').update({status:'skipped'}).eq('id',singing.dbId);
+  const next=state.queue.find(e=>e.status==='waiting');
+  if(next) await db.from('queue_entries').update({status:'singing'}).eq('id',next.dbId);
+  updateDjStatus('Vez passada');showToast('Vez passada ao próximo','gold');
+  await loadQueueFromDB();
 }
 
-function skipCurrent() {
-  if (state.currentSinging === 0) return;
-  state.currentSinging++;
-  updateHostMonitor(); renderQueue();
-  updateDjStatus('Vez passada — próximo na fila');
-  showToast('Vez passada ao próximo','gold');
-}
-
-function togglePause() {
-  state.paused = !state.paused;
-  const btn = document.getElementById('djPauseBtn');
-  const banner1 = document.getElementById('djPausedBanner');
-  const banner2 = document.getElementById('hostPausedBanner');
-  const banner3 = document.getElementById('queuePausedBanner');
-  if (state.paused) {
-    btn.classList.add('paused');
-    btn.innerHTML = '<i class="ti ti-player-play"></i> Retomar Fila';
-    [banner1,banner2,banner3].forEach(b => b?.classList.add('show'));
-    updateDjStatus('⏸ Fila pausada');
-    showToast('⏸ Fila pausada','purple');
+async function togglePause() {
+  if(!state.partyId)return;
+  state.paused=!state.paused;
+  await db.from('parties').update({status:state.paused?'paused':'active'}).eq('id',state.partyId);
+  const btn=document.getElementById('djPauseBtn');
+  const banners=['djPausedBanner','hostPausedBanner','queuePausedBanner'].map(id=>document.getElementById(id));
+  if(state.paused){
+    btn.classList.add('paused');btn.innerHTML='<i class="ti ti-player-play"></i> Retomar Fila';
+    banners.forEach(b=>b?.classList.add('show'));
+    updateDjStatus('⏸ Pausada');showToast('⏸ Fila pausada','purple');
   } else {
-    btn.classList.remove('paused');
-    btn.innerHTML = '<i class="ti ti-player-pause"></i> Pausar Fila';
-    [banner1,banner2,banner3].forEach(b => b?.classList.remove('show'));
-    updateDjStatus('▶ Fila retomada');
-    showToast('▶ Fila retomada!','teal');
+    btn.classList.remove('paused');btn.innerHTML='<i class="ti ti-player-pause"></i> Pausar Fila';
+    banners.forEach(b=>b?.classList.remove('show'));
+    updateDjStatus('▶ Retomada');showToast('▶ Fila retomada!','teal');
   }
 }
 
-function rejectTop() {
-  const cur = state.currentSinging;
-  if (cur >= state.queue.length) return;
-  const removed = state.queue.splice(cur, 1)[0];
-  updateHostMonitor(); renderQueue();
-  updateDjStatus('Removido: ' + removed.name);
-  showToast('Entrada removida da fila','red');
+async function rejectTop() {
+  const cur=state.queue.find(e=>e.status==='waiting')||state.queue.find(e=>e.status==='singing');
+  if(!cur)return;
+  await db.from('queue_entries').update({status:'removed'}).eq('id',cur.dbId);
+  updateDjStatus('Removido: '+cur.name);showToast('Removido da fila','red');
+  await loadQueueFromDB();
 }
+
+function updateDjStatus(msg){const el=document.getElementById('djStatus');if(el)el.textContent=msg;}
 
 /* ============================================================
-   DJ: ADICIONAR PESSOA MANUALMENTE (sem celular)
+   DJ: ADICIONAR MANUALMENTE
 ============================================================ */
-function djAddPerson() {
-  const nameEl = document.getElementById('djAddName');
-  const codeEl = document.getElementById('djAddCode');
-  const name   = nameEl.value.trim();
-  const code   = codeEl.value.trim().toUpperCase();
-
-  nameEl.style.borderColor = name ? '' : 'var(--red)';
-  codeEl.style.borderColor = code ? '' : 'var(--red)';
-  if (!name || !code) {
-    showToast('Preencha nome e código da música','red');
-    if (!name) nameEl.focus(); else codeEl.focus();
-    return;
-  }
-
-  if (!state.qrGenerated) {
-    showToast('Gere uma festa primeiro!','red'); return;
-  }
-
-  addToQueue(name, code);
-  nameEl.value = ''; codeEl.value = '';
-  nameEl.focus();
-  updateDjStatus('DJ adicionou: ' + name + ' — #' + code);
-  showToast('✅ ' + name + ' adicionado à fila pelo DJ','teal');
-}
-
-function updateDjStatus(msg) {
-  const el = document.getElementById('djStatus');
-  if (el) el.textContent = msg;
+async function djAddPerson() {
+  const nameEl=document.getElementById('djAddName');
+  const codeEl=document.getElementById('djAddCode');
+  const name=nameEl.value.trim(), code=codeEl.value.trim().toUpperCase();
+  nameEl.style.borderColor=name?'':'var(--red)';
+  codeEl.style.borderColor=code?'':'var(--red)';
+  if(!name||!code){showToast('Preencha nome e código','red');return;}
+  if(!state.partyId){showToast('Gere uma festa primeiro!','red');return;}
+  const entry=await addToQueue(name,code,'','','dj');
+  if(!entry){showToast('Erro ao adicionar','red');return;}
+  nameEl.value='';codeEl.value='';nameEl.focus();
+  updateDjStatus('DJ adicionou: '+name+' — #'+code);
+  showToast('✅ '+name+' adicionado pelo DJ','teal');
+  await loadQueueFromDB();
 }
 
 /* ============================================================
    HOST MONITOR
 ============================================================ */
 function updateHostMonitor() {
-  const list  = document.getElementById('hostQueueList');
-  const count = document.getElementById('queueCount');
-  if (!list) return;
-  count.textContent = state.queue.length;
-  if (!state.queue.length) {
-    list.innerHTML = '<div class="empty-msg"><i class="ti ti-music-off"></i><br>Nenhum participante ainda.<br>Compartilhe o QR Code!</div>';
-    return;
-  }
-  const dq = getDisplayQueue();
-  list.innerHTML = dq.map((p,i) => {
-    const singing = i === state.currentSinging - 1;
-    const next    = i === state.currentSinging;
-    const cls     = singing ? 'singing' : next ? 'next' : '';
-    const tag     = singing
-      ? '<span class="pill pill-teal">🎤 Cantando</span>'
-      : next ? '<span class="pill pill-gold">⚡ Próximo</span>' : '';
-    const mesa = p.mesa ? `<span style="font-size:10px;color:var(--muted)"> · 🪑 ${p.mesa}</span>` : '';
+  const list=document.getElementById('hostQueueList');
+  const count=document.getElementById('queueCount');
+  const active=state.queue.filter(e=>['waiting','singing'].includes(e.status));
+  if(count) count.textContent=active.length;
+  if(!list)return;
+  if(!active.length){list.innerHTML='<div class="empty-msg"><i class="ti ti-music-off"></i><br>Nenhum participante ainda.<br>Compartilhe o QR Code!</div>';return;}
+  list.innerHTML=active.map((p,i)=>{
+    const singing=p.status==='singing';
+    const isNext=!singing&&i===active.findIndex(e=>e.status==='waiting')&&active.some(e=>e.status==='singing')||(!active.some(e=>e.status==='singing')&&i===0);
+    const cls=singing?'singing':isNext?'next':'';
+    const tag=singing?'<span class="pill pill-teal">🎤 Cantando</span>':isNext?'<span class="pill pill-gold">⚡ Próximo</span>':'';
+    const djBadge=p.addedBy==='dj'?'<span style="font-size:10px;color:var(--purple)"> 🎧DJ</span>':'';
+    const mesa=p.mesa?`<span style="font-size:10px;color:var(--muted)"> · 🪑 ${p.mesa}</span>`:'';
     return `<div class="qitem ${cls}">
       <span class="qitem-pos ${cls}">${i+1}</span>
       <div class="qitem-info">
-        <div class="qitem-name">${p.name}${p.duet?' & '+p.duet:''}</div>
-        <div class="qitem-song">
-          <span style="font-family:var(--font-t);font-size:16px;letter-spacing:2px;color:${singing?'var(--teal)':next?'var(--gold)':'var(--gold)'}">
-            #${p.song}
-          </span>${mesa}
-        </div>
+        <div class="qitem-name">${p.name}${p.duet?' & '+p.duet:''}${djBadge}</div>
+        <div class="qitem-song"><span style="font-family:var(--font-t);font-size:16px;letter-spacing:2px;color:${singing?'var(--teal)':'var(--gold)'}">#${p.song}</span>${mesa}</div>
       </div>${tag}
     </div>`;
   }).join('');
@@ -1983,62 +1724,55 @@ function updateHostMonitor() {
 /* ============================================================
    DEMO: SIM JOIN
 ============================================================ */
-const DEMO_CODES = ['042','117','203','089','156','301','077','198','015'];
-function simJoin() {
-  if (!state.qrGenerated) { generateParty(); return; }
-  if (state.demoCount >= SONGS_DEMO.length) return;
-  const [name,,duet] = SONGS_DEMO[state.demoCount];
-  const code = DEMO_CODES[state.demoCount % DEMO_CODES.length];
+async function simJoin() {
+  if(!state.qrGenerated){await generateParty();return;}
+  if(state.demoCount>=SONGS_DEMO.length)return;
+  const [name,,duet]=SONGS_DEMO[state.demoCount];
+  const code=DEMO_CODES[state.demoCount%DEMO_CODES.length];
   state.demoCount++;
-  addToQueue(name, code, duet);
-  showToast('👤 ' + name + ' entrou — código ' + code, 'teal');
+  const entry=await addToQueue(name,code,duet||'','','dj');
+  if(entry){
+    if(!state.queue.some(e=>e.status==='singing'))
+      await db.from('queue_entries').update({status:'singing'}).eq('id',entry.id);
+    showToast('👤 '+name+' — #'+code,'teal');
+    await loadQueueFromDB();
+  }
 }
 
 /* ============================================================
-   JOIN QUEUE (participant)
+   JOIN QUEUE (participante)
 ============================================================ */
-function joinQueue() {
-  const nameEl  = document.getElementById('participantName');
-  const codeEl  = document.getElementById('participantCode');
-  const duetEl  = document.getElementById('participantDuet');
-  const mesaEl  = document.getElementById('participantMesa');
-  const limitW  = document.getElementById('limitWarning');
-  const name    = nameEl.value.trim();
-  const code    = codeEl.value.trim().toUpperCase();
-  const duet    = state.settings.duet ? (duetEl?.value.trim()||'') : '';
-  const mesa    = state.settings.mesa ? (mesaEl?.value.trim()||'') : '';
-
-  nameEl.style.borderColor = name ? '' : 'var(--red)';
-  codeEl.style.borderColor = code ? '' : 'var(--red)';
-  if (!name || !code) {
-    if (!name) nameEl.focus();
-    else codeEl.focus();
-    return;
-  }
-
-  if (state.settings.songLimit > 0) {
-    const count = state.personSongs[name] || 0;
-    if (count >= state.settings.songLimit) {
-      limitW.textContent = `Você já pediu ${count} música(s). Limite: ${state.settings.songLimit}.`;
-      limitW.classList.add('show'); return;
-    }
+async function joinQueue() {
+  const nameEl=document.getElementById('participantName');
+  const codeEl=document.getElementById('participantCode');
+  const duetEl=document.getElementById('participantDuet');
+  const mesaEl=document.getElementById('participantMesa');
+  const limitW=document.getElementById('limitWarning');
+  const name=nameEl.value.trim(), code=codeEl.value.trim().toUpperCase();
+  const duet=state.settings.duet?(duetEl?.value.trim()||''):'';
+  const mesa=state.settings.mesa?(mesaEl?.value.trim()||''):'';
+  nameEl.style.borderColor=name?'':'var(--red)';
+  codeEl.style.borderColor=code?'':'var(--red)';
+  if(!name||!code){if(!name)nameEl.focus();else codeEl.focus();return;}
+  if(state.settings.songLimit>0){
+    const cnt=state.personSongs[name]||0;
+    if(cnt>=state.settings.songLimit){limitW.textContent=`Limite: ${state.settings.songLimit} música(s).`;limitW.classList.add('show');return;}
   }
   limitW.classList.remove('show');
-
-  if (!state.qrGenerated || !state.partyCode) {
-    showToast('❌ Festa não encontrada. Use o QR Code.', 'red');
-    return;
-  }
-
-  state.myName = name; state.mySong = code;
-  addToQueue(name, code, duet, mesa);
-  state.myIndex = state.queue.length - 1;
-  saveQueueToStorage();
-  // Clear fields for next use
-  nameEl.value = ''; codeEl.value = '';
+  if(!state.qrGenerated||!state.partyId){showToast('❌ Festa não encontrada. Use o QR Code.','red');return;}
+  const btn=document.querySelector('#screen-join .btn-primary');
+  if(btn){btn.innerHTML='<i class="ti ti-loader-2"></i> Entrando...';btn.disabled=true;}
+  const entry=await addToQueue(name,code,duet,mesa,'participant');
+  if(btn){btn.innerHTML='<i class="ti ti-arrow-right"></i> Entrar na fila';btn.disabled=false;}
+  if(!entry){showToast('Erro ao entrar na fila','red');return;}
+  state.myName=name;state.mySong=code;state.myEntryId=entry.id;
+  subscribeToQueue(state.partyId);
+  nameEl.value='';codeEl.value='';
   showScreen('queue');
-  renderQueue();
+  document.getElementById('queuePartyBadge').textContent=state.partyName;
+  await loadQueueFromDB(state.partyId);
 }
+
 
 /* ============================================================
    RENDER QUEUE (participant view)
