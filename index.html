@@ -699,6 +699,89 @@ html, body {
   font-size: 14px; padding: 9px 13px; outline: none; transition: border-color .2s;
 }
 .dj-add-fields input:focus { border-color: var(--teal); }
+/* ============================================================
+   BUSCA DE MÚSICA — modo global
+============================================================ */
+.music-search-wrap { position: relative; width: 100%; }
+
+.music-search-input {
+  width: 100%; background: var(--surface);
+  border: 1px solid var(--border2); border-radius: 10px;
+  color: var(--text); font-family: var(--font-b);
+  font-size: 14px; padding: 10px 36px 10px 14px;
+  outline: none; transition: border-color .2s;
+}
+.music-search-input:focus { border-color: var(--red); }
+
+.music-search-clear {
+  position: absolute; right: 10px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none;
+  color: var(--muted); cursor: pointer;
+  font-size: 15px; padding: 4px;
+  display: none; align-items: center;
+}
+.music-search-clear.show { display: flex; }
+
+.music-results {
+  position: absolute; top: calc(100% + 6px);
+  left: 0; right: 0; z-index: 200;
+  background: var(--card2); border: 1px solid var(--border2);
+  border-radius: 12px; max-height: 260px; overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5); display: none;
+}
+.music-results.show { display: block; }
+.music-results::-webkit-scrollbar { width: 4px; }
+.music-results::-webkit-scrollbar-thumb { background: var(--red); border-radius: 4px; }
+
+.music-result-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px; cursor: pointer; transition: background .15s;
+  border-bottom: 1px solid var(--border);
+}
+.music-result-item:last-child { border-bottom: none; }
+.music-result-item:hover,
+.music-result-item.selected { background: var(--red-dim); }
+
+.mri-code {
+  font-family: var(--font-t); font-size: 15px; letter-spacing: 1px;
+  color: var(--gold); min-width: 52px; flex-shrink: 0;
+}
+.mri-info { flex: 1; min-width: 0; }
+.mri-titulo {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mri-artista {
+  font-size: 11px; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.music-selected-card {
+  background: var(--teal-dim); border: 1px solid rgba(0,229,196,.25);
+  border-radius: 10px; padding: 10px 14px;
+  display: none; margin-top: 8px; gap: 10px; align-items: center;
+}
+.music-selected-card.show { display: flex; }
+.msc-code {
+  font-family: var(--font-t); font-size: 20px;
+  letter-spacing: 2px; color: var(--gold); flex-shrink: 0;
+}
+.msc-info { flex: 1; min-width: 0; }
+.msc-titulo { font-size: 13px; font-weight: 600; color: var(--text); }
+.msc-artista { font-size: 11px; color: var(--muted); }
+.msc-clear {
+  background: none; border: none; color: var(--muted);
+  cursor: pointer; font-size: 16px; padding: 4px;
+  transition: color .2s; flex-shrink: 0;
+}
+.msc-clear:hover { color: var(--red); }
+
+.music-searching, .music-empty {
+  padding: 16px 14px; text-align: center;
+  font-size: 13px; color: var(--muted); display: none;
+}
+.music-searching.show, .music-empty.show { display: block; }
   </style>
 </head>
 <body>
@@ -1178,32 +1261,78 @@ html, body {
     <div class="join-mode-label bar" id="joinModeLabel">🍺 Bar</div>
     <div class="divider"></div>
     <div class="join-form">
+
+      <!-- Mesa/Comanda (modo bar) -->
       <div class="input-group" id="mesaField" style="display:none">
         <label>Número da Mesa / Comanda</label>
         <input type="text" id="participantMesa" placeholder="Ex: Mesa 7" />
       </div>
+
+      <!-- Nome — sempre visível -->
       <div class="input-group">
         <label>Seu nome</label>
         <input type="text" id="participantName" placeholder="Como te chamamos?"
-          onkeydown="if(event.key==='Enter')document.getElementById('participantCode').focus()" />
+          onkeydown="if(event.key==='Enter')focusMusicSearch()" />
       </div>
-      <div class="input-group">
-        <label>Código da música <span style="font-weight:400;color:var(--muted)">(ver cardápio)</span></label>
-        <div style="position:relative">
+
+      <!-- MODO LOCAL: código do cardápio físico -->
+      <div id="joinFieldLocal">
+        <div class="input-group">
+          <label>Código da música <span style="font-weight:400;color:var(--muted)">(ver cardápio)</span></label>
           <input type="text" id="participantCode" placeholder="Ex: 042"
             style="font-family:var(--font-t);font-size:22px;letter-spacing:4px;text-align:center;text-transform:uppercase"
             maxlength="6"
             onkeydown="if(event.key==='Enter')joinQueue()" />
-        </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:5px;text-align:center">
-          <i class="ti ti-info-circle" style="font-size:12px"></i>
-          O DJ identifica a música pelo código do cardápio
+          <div style="font-size:11px;color:var(--muted);margin-top:5px;text-align:center">
+            <i class="ti ti-info-circle" style="font-size:12px"></i>
+            O DJ identifica a música pelo código do cardápio
+          </div>
         </div>
       </div>
+
+      <!-- MODO GLOBAL: busca dinâmica na playlist do sistema -->
+      <div id="joinFieldGlobal" style="display:none">
+        <div class="input-group">
+          <label>Buscar música ou artista</label>
+          <div class="music-search-wrap">
+            <input type="text" id="musicSearchInput"
+              class="music-search-input"
+              placeholder="Digite o nome da música ou artista..."
+              autocomplete="off"
+              oninput="onMusicSearch(this.value)"
+              onkeydown="onMusicSearchKey(event)" />
+            <button class="music-search-clear" id="musicSearchClear"
+              onclick="clearMusicSearch()" type="button">
+              <i class="ti ti-x"></i>
+            </button>
+            <div class="music-results" id="musicResults">
+              <div class="music-searching" id="musicSearching">
+                <i class="ti ti-loader-2"></i> Buscando...
+              </div>
+              <div class="music-empty" id="musicEmpty">
+                Nenhuma música encontrada. Tente outro termo.
+              </div>
+            </div>
+          </div>
+          <div class="music-selected-card" id="musicSelectedCard">
+            <div class="msc-code" id="mscCode">—</div>
+            <div class="msc-info">
+              <div class="msc-titulo" id="mscTitulo">—</div>
+              <div class="msc-artista" id="mscArtista">—</div>
+            </div>
+            <button class="msc-clear" onclick="clearMusicSelection()" type="button">
+              <i class="ti ti-x"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dueto -->
       <div class="input-group" id="duetField" style="display:none">
         <label>Parceiro de Dueto (opcional)</label>
         <input type="text" id="participantDuet" placeholder="Nome do parceiro" />
       </div>
+
       <div class="limit-warning" id="limitWarning"></div>
       <button class="btn-primary" onclick="joinQueue()">
         <i class="ti ti-arrow-right"></i> Entrar na fila
@@ -1302,6 +1431,7 @@ const state = {
   myEntryId:null, myName:'', mySong:'',
   demoCount:0, qrGenerated:false,
   mode:'bar', paused:false,
+  catalogMode:'local',   // 'local' | 'global'
   settings:{ mesa:true, rotation:true, pix:true, pixValue:5, songLimit:0, hidden:false, duet:true },
   singCount:{}, personSongs:{},
   realtimeSub:null,
@@ -1614,6 +1744,8 @@ function updateJoinScreen() {
   if (mesaF) mesaF.style.display = (m === 'bar' && state.settings.mesa)  ? '' : 'none';
   if (duetF) duetF.style.display = state.settings.duet ? '' : 'none';
   if (pixBtn)pixBtn.style.display = (m === 'bar' && state.settings.pix)  ? '' : 'none';
+  // Ativa campos corretos conforme modo do catálogo
+  updateJoinFields();
 }
 
 /* ============================================================
@@ -1904,33 +2036,70 @@ async function simJoin() {
    JOIN QUEUE (participante)
 ============================================================ */
 async function joinQueue() {
-  const nameEl=document.getElementById('participantName');
-  const codeEl=document.getElementById('participantCode');
-  const duetEl=document.getElementById('participantDuet');
-  const mesaEl=document.getElementById('participantMesa');
-  const limitW=document.getElementById('limitWarning');
-  const name=nameEl.value.trim(), code=codeEl.value.trim().toUpperCase();
-  const duet=state.settings.duet?(duetEl?.value.trim()||''):'';
-  const mesa=state.settings.mesa?(mesaEl?.value.trim()||''):'';
-  nameEl.style.borderColor=name?'':'var(--red)';
-  codeEl.style.borderColor=code?'':'var(--red)';
-  if(!name||!code){if(!name)nameEl.focus();else codeEl.focus();return;}
-  if(state.settings.songLimit>0){
-    const cnt=state.personSongs[name]||0;
-    if(cnt>=state.settings.songLimit){limitW.textContent=`Limite: ${state.settings.songLimit} música(s).`;limitW.classList.add('show');return;}
+  const nameEl = document.getElementById('participantName');
+  const duetEl = document.getElementById('participantDuet');
+  const mesaEl = document.getElementById('participantMesa');
+  const limitW = document.getElementById('limitWarning');
+  const name   = nameEl.value.trim();
+  const duet   = state.settings.duet ? (duetEl?.value.trim()||'') : '';
+  const mesa   = state.settings.mesa ? (mesaEl?.value.trim()||'') : '';
+
+  nameEl.style.borderColor = name ? '' : 'var(--red)';
+  if (!name) { nameEl.focus(); return; }
+
+  // ── Determina código conforme modo do catálogo ──
+  let code = '';
+  if (state.catalogMode === 'global') {
+    if (!selectedMusic) {
+      showToast('Selecione uma música da lista 🎵','red');
+      document.getElementById('musicSearchInput')?.focus();
+      return;
+    }
+    code = selectedMusic.codigo;
+  } else {
+    const codeEl = document.getElementById('participantCode');
+    code = codeEl?.value.trim().toUpperCase() || '';
+    if (codeEl) codeEl.style.borderColor = code ? '' : 'var(--red)';
+    if (!code) { codeEl?.focus(); return; }
+  }
+
+  if (state.settings.songLimit > 0) {
+    const cnt = state.personSongs[name] || 0;
+    if (cnt >= state.settings.songLimit) {
+      limitW.textContent = `Limite: ${state.settings.songLimit} música(s).`;
+      limitW.classList.add('show'); return;
+    }
   }
   limitW.classList.remove('show');
-  if(!state.qrGenerated||!state.partyId){showToast('❌ Festa não encontrada. Use o QR Code.','red');return;}
-  const btn=document.querySelector('#screen-join .btn-primary');
-  if(btn){btn.innerHTML='<i class="ti ti-loader-2"></i> Entrando...';btn.disabled=true;}
-  const entry=await addToQueue(name,code,duet,mesa,'participant');
-  if(btn){btn.innerHTML='<i class="ti ti-arrow-right"></i> Entrar na fila';btn.disabled=false;}
-  if(!entry){showToast('Erro ao entrar na fila','red');return;}
-  state.myName=name;state.mySong=code;state.myEntryId=entry.id;
+
+  if (!state.qrGenerated || !state.partyId) {
+    showToast('❌ Festa não encontrada. Use o QR Code.','red'); return;
+  }
+
+  const btn = document.querySelector('#screen-join .btn-primary');
+  if (btn) { btn.innerHTML = '<i class="ti ti-loader-2"></i> Entrando...'; btn.disabled = true; }
+
+  const entry = await addToQueue(name, code, duet, mesa, 'participant');
+
+  if (btn) { btn.innerHTML = '<i class="ti ti-arrow-right"></i> Entrar na fila'; btn.disabled = false; }
+  if (!entry) { showToast('Erro ao entrar na fila','red'); return; }
+
+  state.myName    = name;
+  state.mySong    = code;
+  state.myEntryId = entry.id;
   subscribeToQueue(state.partyId);
-  nameEl.value='';codeEl.value='';
+
+  // Limpa campos
+  nameEl.value = '';
+  if (state.catalogMode === 'global') {
+    clearMusicSelection(true);
+  } else {
+    const codeEl = document.getElementById('participantCode');
+    if (codeEl) codeEl.value = '';
+  }
+
   showScreen('queue');
-  document.getElementById('queuePartyBadge').textContent=state.partyName;
+  document.getElementById('queuePartyBadge').textContent = state.partyName;
   await loadQueueFromDB(state.partyId);
 }
 
@@ -2106,6 +2275,7 @@ async function openWelcomeScreen() {
   state.partyId     = party?.id     || '';
   state.mode        = party?.event_type || mode;
   state.qrGenerated = true;
+  state.catalogMode = (party?.event_type === 'global') ? 'global' : 'local';
   state.settings    = party?.mode_settings || {
     bar:  { mesa:false, rotation:true, pix:false, pixValue:5, songLimit:0, hidden:false, duet:true },
     bday: { mesa:false, rotation:true, pix:false, pixValue:5, songLimit:2, hidden:false, duet:true },
@@ -2199,13 +2369,14 @@ async function restorePartySession() {
 
   // Restaura o estado
   Object.assign(state, {
-    partyId:     party.id,
-    partyName:   party.name,
-    partyCode:   party.code,
-    mode:        party.event_type,
-    settings:    party.mode_settings || state.settings,
-    paused:      party.status === 'paused',
-    qrGenerated: true,
+    partyId:      party.id,
+    partyName:    party.name,
+    partyCode:    party.code,
+    mode:         party.event_type,
+    catalogMode:  (party.event_type === 'global') ? 'global' : 'local',
+    settings:     party.mode_settings || state.settings,
+    paused:       party.status === 'paused',
+    qrGenerated:  true,
   });
 
   // Reconstrói a UI
@@ -2237,6 +2408,184 @@ async function restorePartySession() {
   showToast(msg, 'teal');
   showCtTab('tab-comando');
 }
+
+/* ============================================================
+   BUSCA DE MÚSICA — catálogo local ou global
+============================================================ */
+async function searchMusic(term) {
+  const query = term.trim().toLowerCase();
+  if (query.length < 2) return [];
+
+  if (state.catalogMode === 'global') {
+    const { data, error } = await db
+      .from('playlist_global_karaokelive')
+      .select('id, titulo, artista, codigo, link_video')
+      .or(`titulo.ilike.%${query}%,artista.ilike.%${query}%`)
+      .order('artista')
+      .limit(30);
+    if (error) { console.error('Erro busca global:', error); return []; }
+    return (data || []).map(m => ({
+      id: m.id, titulo: m.titulo, artista: m.artista,
+      codigo: m.codigo, link_video: m.link_video, origem: 'global',
+    }));
+  } else {
+    // Busca no catálogo local do bar (musicas_catalogo)
+    const { data, error } = await db
+      .from('musicas_catalogo')
+      .select('id, titulo, artista, codigo')
+      .eq('client_id', loggedClient?.id || '')
+      .or(`titulo.ilike.%${query}%,artista.ilike.%${query}%,codigo.ilike.%${query}%`)
+      .limit(30);
+    if (error) { console.error('Erro busca local:', error); return []; }
+    return (data || []).map(m => ({
+      id: m.id, titulo: m.titulo, artista: m.artista,
+      codigo: m.codigo, link_video: null, origem: 'local',
+    }));
+  }
+}
+
+/* ============================================================
+   CONTROLES DO CAMPO DE BUSCA (modo global)
+============================================================ */
+let selectedMusic    = null;
+let searchDebounce   = null;
+
+function updateJoinFields() {
+  const isGlobal = (state.catalogMode === 'global');
+  const localEl  = document.getElementById('joinFieldLocal');
+  const globalEl = document.getElementById('joinFieldGlobal');
+  if (localEl)  localEl.style.display  = isGlobal ? 'none' : '';
+  if (globalEl) globalEl.style.display = isGlobal ? ''     : 'none';
+  if (isGlobal) clearMusicSelection();
+}
+
+function focusMusicSearch() {
+  if (state.catalogMode === 'global') {
+    document.getElementById('musicSearchInput')?.focus();
+  } else {
+    document.getElementById('participantCode')?.focus();
+  }
+}
+
+function onMusicSearch(value) {
+  const clearBtn = document.getElementById('musicSearchClear');
+  if (clearBtn) clearBtn.classList.toggle('show', value.length > 0);
+  if (selectedMusic) clearMusicSelection(false);
+  clearTimeout(searchDebounce);
+  if (value.trim().length < 2) { hideMusicResults(); return; }
+  showMusicSearching();
+  searchDebounce = setTimeout(async () => {
+    const results = await searchMusic(value);
+    renderMusicResults(results, value);
+  }, 300);
+}
+
+function onMusicSearchKey(e) {
+  const results = document.getElementById('musicResults');
+  const items   = results?.querySelectorAll('.music-result-item');
+  if (!items || items.length === 0) return;
+  const current = results.querySelector('.music-result-item.selected');
+  let idx = -1;
+  items.forEach((el, i) => { if (el === current) idx = i; });
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    items.forEach(el => el.classList.remove('selected'));
+    items[Math.min(idx + 1, items.length - 1)].classList.add('selected');
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    items.forEach(el => el.classList.remove('selected'));
+    items[Math.max(idx - 1, 0)].classList.add('selected');
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    const sel = results.querySelector('.music-result-item.selected') || items[0];
+    if (sel) sel.click();
+  } else if (e.key === 'Escape') {
+    hideMusicResults();
+  }
+}
+
+function renderMusicResults(results, term) {
+  const container = document.getElementById('musicResults');
+  const searching = document.getElementById('musicSearching');
+  const empty     = document.getElementById('musicEmpty');
+  if (!container) return;
+  container.querySelectorAll('.music-result-item').forEach(el => el.remove());
+  searching?.classList.remove('show');
+  if (results.length === 0) {
+    empty?.classList.add('show');
+    container.classList.add('show');
+    return;
+  }
+  empty?.classList.remove('show');
+  const hi = (str) => {
+    const re = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+    return str.replace(re, '<mark style="background:rgba(255,184,0,.3);color:var(--gold);border-radius:2px">$1</mark>');
+  };
+  results.forEach(music => {
+    const item = document.createElement('div');
+    item.className = 'music-result-item';
+    item.innerHTML = `
+      <div class="mri-code">#${music.codigo}</div>
+      <div class="mri-info">
+        <div class="mri-titulo">${hi(music.titulo)}</div>
+        <div class="mri-artista">${hi(music.artista)}</div>
+      </div>`;
+    item.addEventListener('click', () => selectMusic(music));
+    container.appendChild(item);
+  });
+  container.classList.add('show');
+}
+
+function selectMusic(music) {
+  selectedMusic = music;
+  const card    = document.getElementById('musicSelectedCard');
+  const codeEl  = document.getElementById('mscCode');
+  const tituloEl= document.getElementById('mscTitulo');
+  const artistaEl=document.getElementById('mscArtista');
+  if (codeEl)   codeEl.textContent   = '#' + music.codigo;
+  if (tituloEl) tituloEl.textContent = music.titulo;
+  if (artistaEl)artistaEl.textContent= music.artista;
+  if (card)     card.classList.add('show');
+  const input = document.getElementById('musicSearchInput');
+  if (input)  input.value = music.titulo + ' — ' + music.artista;
+  hideMusicResults();
+  document.getElementById('musicSearchClear')?.classList.remove('show');
+}
+
+function clearMusicSelection(clearInput = true) {
+  selectedMusic = null;
+  document.getElementById('musicSelectedCard')?.classList.remove('show');
+  if (clearInput) {
+    const input = document.getElementById('musicSearchInput');
+    if (input) input.value = '';
+    document.getElementById('musicSearchClear')?.classList.remove('show');
+  }
+}
+
+function clearMusicSearch() {
+  clearMusicSelection(true);
+  hideMusicResults();
+  document.getElementById('musicSearchInput')?.focus();
+}
+
+function showMusicSearching() {
+  const container = document.getElementById('musicResults');
+  container?.querySelectorAll('.music-result-item').forEach(el => el.remove());
+  document.getElementById('musicSearching')?.classList.add('show');
+  document.getElementById('musicEmpty')?.classList.remove('show');
+  container?.classList.add('show');
+}
+
+function hideMusicResults() {
+  document.getElementById('musicResults')?.classList.remove('show');
+  document.getElementById('musicSearching')?.classList.remove('show');
+  document.getElementById('musicEmpty')?.classList.remove('show');
+}
+
+// Fecha dropdown ao clicar fora
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.music-search-wrap')) hideMusicResults();
+});
 
 /* ============================================================
    INIT
