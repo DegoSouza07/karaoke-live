@@ -2271,11 +2271,13 @@ async function openWelcomeScreen() {
 
   // Popula o state com dados reais (ou URL como fallback)
   state.partyCode   = partyCode;
-  state.partyName   = party?.name   || partyName;
-  state.partyId     = party?.id     || '';
-  state.mode        = party?.event_type || mode;
+  state.partyName   = party?.name        || partyName;
+  state.partyId     = party?.id          || '';
+  state.mode        = party?.event_type  || mode;
   state.qrGenerated = true;
-  state.catalogMode = (party?.event_type === 'global') ? 'global' : 'local';
+  // catalogMode: usa event_type do banco OU parâmetro 'm' da URL
+  const resolvedMode = party?.event_type || mode;
+  state.catalogMode = (resolvedMode === 'global') ? 'global' : 'local';
   state.settings    = party?.mode_settings || {
     bar:  { mesa:false, rotation:true, pix:false, pixValue:5, songLimit:0, hidden:false, duet:true },
     bday: { mesa:false, rotation:true, pix:false, pixValue:5, songLimit:2, hidden:false, duet:true },
@@ -2335,9 +2337,16 @@ async function openWelcomeScreen() {
    GO TO JOIN  (from welcome screen)
 ============================================================ */
 function goToJoin() {
-  updateJoinScreen();
+  updateJoinScreen();    // atualiza labels e campos
+  updateJoinFields();    // garante local vs global
   showScreen('join');
-  setTimeout(() => document.getElementById('participantName')?.focus(), 200);
+  setTimeout(() => {
+    if (state.catalogMode === 'global') {
+      document.getElementById('musicSearchInput')?.focus();
+    } else {
+      document.getElementById('participantName')?.focus();
+    }
+  }, 200);
 }
 
 /* ============================================================
