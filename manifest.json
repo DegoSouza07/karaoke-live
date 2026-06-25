@@ -1,15 +1,30 @@
 {
-  "name": "KaraokêLive — Fila Inteligente",
-  "short_name": "KaraokêLive",
-  "description": "Sistema de fila para karaokê com QR Code",
-  "start_url": "./index.html",
+  "name": "KaraokeLive",
+  "short_name": "KaraokeLive",
+  "description": "Fila Inteligente para Karaokê",
+  "start_url": ".",
   "display": "standalone",
-  "background_color": "#0d0d1a",
-  "theme_color": "#0d0d1a",
-  "orientation": "portrait-primary",
-  "lang": "pt-BR",
+  "background_color": "#080810",
+  "theme_color": "#ff3c6e",
+  "orientation": "portrait",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
   ]
 }
