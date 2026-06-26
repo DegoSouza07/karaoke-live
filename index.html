@@ -1428,7 +1428,7 @@ const SONGS_DEMO = [
 ============================================================ */
 const state = {
   partyId:'', partyName:'', partyCode:'', queue:[], currentSinging:0,
-  myEntryId:null, myName:'', mySong:'',
+  myEntryId:null, myName:'', mySong:'', myMusicTitle:null,
   demoCount:0, qrGenerated:false,
   mode:'bar', paused:false,
   catalogMode:'local',   // 'local' | 'global'
@@ -1890,9 +1890,12 @@ async function loadQueueFromDB(partyId) {
   const {data} = await db.from('queue_entries').select('*')
     .eq('party_id',pid).in('status',['waiting','singing']).order('position',{ascending:true});
   state.queue=(data||[]).map((e,i)=>({
-    id:e.id,dbId:e.id,name:e.participant,song:e.music_code,
-    duet:e.duet_partner||'',mesa:e.table_num||'',
-    status:e.status,addedBy:e.added_by,color:COLORS[i%COLORS.length],
+    id:e.id, dbId:e.id, name:e.participant, song:e.music_code,
+    titulo:  e.music_title  || null,   // título real (modo global)
+    artista: e.music_artist || null,   // artista real (modo global)
+    origem:  e.origem_musica || 'local',
+    duet:e.duet_partner||'', mesa:e.table_num||'',
+    status:e.status, addedBy:e.added_by, color:COLORS[i%COLORS.length],
   }));
   const sIdx=state.queue.findIndex(e=>e.status==='singing');
   state.currentSinging=sIdx>=0?sIdx+1:0;
@@ -1903,17 +1906,52 @@ async function loadQueueFromDB(partyId) {
 /* ============================================================
    QUEUE MANAGEMENT
 ============================================================ */
-async function addToQueue(name,code,duet,mesa,addedBy) {
-  if(!state.partyId){showToast('Nenhuma festa ativa!','red');return null;}
-  const {data:posData}=await db.rpc('next_queue_position',{p_party_id:state.partyId});
-  const position=posData||(state.queue.length+1);
-  const {data:entry,error}=await db.from('queue_entries').insert({
-    party_id:state.partyId,participant:name,music_code:code,
-    duet_partner:duet||null,table_num:mesa||null,
-    position,status:'waiting',added_by:addedBy||'participant',
-  }).select().single();
-  if(error){console.error(error);return null;}
-  if(!state.personSongs[name])state.personSongs[name]=0;
+async function addToQueue(name, code, duet, mesa, addedBy, musicData) {
+  if (!state.partyId) { showToast('Nenhuma festa ativa!','red'); return null; }
+  const {data:posData} = await db.rpc('next_queue_position', {p_party_id: state.partyId});
+  const position = posData || (state.queue.length + 1);
+
+  // Dados extras para modo global
+  const origemMusica    = musicData?.origem    || 'local';
+  const urlVideoRep     = musicData?.link_video || null;
+  const musicTitle      = musicData?.titulo     || null;
+  const musicArtist     = musicData?.artista    || null;
+
+  const insertData = {
+    party_id:     state.partyId,
+    participant:  name,
+    music_code:   code,
+    duet_partner: duet  || null,
+    table_num:    mesa  || null,
+    position,
+    status:       'waiting',
+    added_by:     addedBy || 'participant',
+  };
+
+  // Adiciona campos opcionais se existirem na tabela
+  if (origemMusica)  insertData.origem_musica        = origemMusica;
+  if (urlVideoRep)   insertData.url_video_reproducao = urlVideoRep;
+  if (musicTitle)    insertData.music_title           = musicTitle;
+  if (musicArtist)   insertData.music_artist          = musicArtist;
+
+  const {data:entry, error} = await db.from('queue_entries')
+    .insert(insertData).select().single();
+
+  if (error) {
+    // Fallback: tenta sem os campos extras (compatibilidade)
+    const {data:entry2, error:error2} = await db.from('queue_entries')
+      .insert({
+        party_id:state.partyId, participant:name, music_code:code,
+        duet_partner:duet||null, table_num:mesa||null,
+        position, status:'waiting', added_by:addedBy||'participant',
+      }).select().single();
+    if (error2) { console.error(error2); return null; }
+    if (!state.personSongs[name]) state.personSongs[name] = 0;
+    state.personSongs[name]++;
+    return entry2;
+  }
+
+  if (!state.personSongs[name]) state.personSongs[name] = 0;
   state.personSongs[name]++;
   return entry;
 }
@@ -2008,7 +2046,11 @@ function updateHostMonitor() {
       <span class="qitem-pos ${cls}">${i+1}</span>
       <div class="qitem-info">
         <div class="qitem-name">${p.name}${p.duet?' & '+p.duet:''}${djBadge}</div>
-        <div class="qitem-song"><span style="font-family:var(--font-t);font-size:16px;letter-spacing:2px;color:${singing?'var(--teal)':'var(--gold)'}">#${p.song}</span>${mesa}</div>
+        <div class="qitem-song">
+          <span style="font-family:var(--font-t);font-size:16px;letter-spacing:2px;color:${singing?'var(--teal)':'var(--gold)'}">#${p.song}</span>
+          ${p.titulo ? `<span style="font-size:11px;color:var(--subtle);margin-left:6px">${p.titulo}</span>` : ''}
+          ${mesa}
+        </div>
       </div>${tag}
     </div>`;
   }).join('');
@@ -2079,14 +2121,15 @@ async function joinQueue() {
   const btn = document.querySelector('#screen-join .btn-primary');
   if (btn) { btn.innerHTML = '<i class="ti ti-loader-2"></i> Entrando...'; btn.disabled = true; }
 
-  const entry = await addToQueue(name, code, duet, mesa, 'participant');
+  const entry = await addToQueue(name, code, duet, mesa, 'participant', selectedMusic);
 
   if (btn) { btn.innerHTML = '<i class="ti ti-arrow-right"></i> Entrar na fila'; btn.disabled = false; }
   if (!entry) { showToast('Erro ao entrar na fila','red'); return; }
 
-  state.myName    = name;
-  state.mySong    = code;
-  state.myEntryId = entry.id;
+  state.myName       = name;
+  state.mySong       = code;
+  state.myMusicTitle = selectedMusic?.titulo || null;
+  state.myEntryId    = entry.id;
   subscribeToQueue(state.partyId);
 
   // Limpa campos
@@ -2151,7 +2194,7 @@ function renderQueue() {
   else if (isSinging) { myPosDsp.textContent='🎤'; botName.textContent=state.myName; waitDsp.textContent='Cantando agora!'; }
   else {
     myPosDsp.textContent = '#' + Math.max(1,myPos);
-    botName.textContent  = state.myName + ' — Código #' + state.mySong;
+    botName.textContent  = state.myName + ' — ' + (state.myMusicTitle || 'Código #' + state.mySong);
     const wait = Math.max(0, myPos-1);
     waitDsp.textContent  = wait === 0 ? 'Próximo a cantar!' : `~${wait*4} min de espera`;
   }
@@ -2181,7 +2224,10 @@ function renderQueue() {
       <div class="entry-details">
         <div class="entry-name">${p.name}${p.duet?' & '+p.duet:''} ${rot}</div>
         <div class="entry-song">
-          🎵 Código <span style="font-family:var(--font-t);font-size:15px;letter-spacing:2px">#${p.song}</span>${mesa}
+          🎵 ${p.titulo
+            ? `<strong style="color:var(--text)">${p.titulo}</strong> <span style="color:var(--muted)">— ${p.artista||''}</span>`
+            : `Código <span style="font-family:var(--font-t);font-size:15px;letter-spacing:2px">#${p.song}</span>`
+          }${mesa}
         </div>
       </div>${stTag}
     </div>`;
