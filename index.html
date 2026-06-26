@@ -402,12 +402,14 @@ html, body {
 }
 .mode-btn .mode-icon  { font-size: 22px; }
 .mode-btn .mode-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; line-height: 1.2; }
-.mode-btn.active-bar  { border-color: var(--mode-bar);  background: rgba(255,124,58,.1);  }
-.mode-btn.active-bday { border-color: var(--mode-bday); background: rgba(244,114,182,.1); }
-.mode-btn.active-wed  { border-color: var(--mode-wed);  background: rgba(167,139,250,.1); }
-.mode-btn.active-bar  .mode-label { color: var(--mode-bar);  }
-.mode-btn.active-bday .mode-label { color: var(--mode-bday); }
-.mode-btn.active-wed  .mode-label { color: var(--mode-wed);  }
+.mode-btn.active-bar   { border-color: var(--mode-bar);  background: rgba(255,124,58,.1);  }
+.mode-btn.active-bday  { border-color: var(--mode-bday); background: rgba(244,114,182,.1); }
+.mode-btn.active-wed   { border-color: var(--mode-wed);  background: rgba(167,139,250,.1); }
+.mode-btn.active-global{ border-color: var(--teal);      background: var(--teal-dim);       }
+.mode-btn.active-bar   .mode-label { color: var(--mode-bar);  }
+.mode-btn.active-bday  .mode-label { color: var(--mode-bday); }
+.mode-btn.active-wed   .mode-label { color: var(--mode-wed);  }
+.mode-btn.active-global .mode-label{ color: var(--teal);      }
 .mode-btn.locked { opacity: .4; cursor: not-allowed; pointer-events: none; }
 .mode-btn .lock-overlay {
   position: absolute; top: 4px; right: 4px;
@@ -500,6 +502,7 @@ html, body {
 .join-mode-label.bar  { background: rgba(255,124,58,.15); color: var(--mode-bar); }
 .join-mode-label.bday { background: rgba(244,114,182,.15); color: var(--mode-bday); }
 .join-mode-label.wed  { background: rgba(167,139,250,.15); color: var(--mode-wed); }
+.join-mode-label.global { background: var(--teal-dim); color: var(--teal); border: 1px solid rgba(0,229,196,.25); }
 .join-form { width: 100%; }
 .join-hint { font-size: 12px; color: var(--muted); text-align: center; }
 .limit-warning { background: rgba(255,184,0,.1); border: 1px solid rgba(255,184,0,.25); border-radius: 10px; color: var(--gold); font-size: 13px; padding: 10px 14px; text-align: center; display: none; }
@@ -947,6 +950,7 @@ html, body {
             <option value="bar">🍺 Bar / Restaurante</option>
             <option value="bday">🎂 Aniversário / Festa</option>
             <option value="wed">💍 Casamento / Corporativo</option>
+            <option value="global">🌐 Playlist Global</option>
           </select>
         </div>
         <div class="input-group" style="margin:0">
@@ -1028,7 +1032,7 @@ html, body {
 
         <div class="input-group">
           <label>Tipo de Evento</label>
-          <div class="mode-selector" id="modeSelector">
+          <div class="mode-selector" id="modeSelector" style="grid-template-columns:repeat(4,1fr)">
             <button class="mode-btn" onclick="selectMode('bar')" id="modeBtn-bar">
               <span class="mode-icon">🍺</span>
               <span class="mode-label">Bar</span>
@@ -1040,6 +1044,10 @@ html, body {
             <button class="mode-btn" onclick="selectMode('wed')" id="modeBtn-wed">
               <span class="mode-icon">💍</span>
               <span class="mode-label">Casamento</span>
+            </button>
+            <button class="mode-btn" onclick="selectMode('global')" id="modeBtn-global">
+              <span class="mode-icon">🌐</span>
+              <span class="mode-label">Global</span>
             </button>
           </div>
           <div id="modeLockedNote" style="font-size:11px;color:var(--muted);margin-top:6px;display:none">
@@ -1068,6 +1076,16 @@ html, body {
           <div class="mode-settings-title wed"><i class="ti ti-rings"></i> Config. Casamento</div>
           <div class="setting-row"><label>Fila Oculta (surpresa)</label><label class="toggle"><input type="checkbox" id="tog-hidden" checked /><span class="toggle-slider"></span></label></div>
           <div class="setting-row"><label>Limite de músicas por pessoa</label><input type="number" class="setting-input" id="wedSongLimit" value="1" min="1" max="5" /></div>
+        </div>
+
+        <!-- Global settings -->
+        <div class="mode-settings" id="settings-global">
+          <div class="mode-settings-title" style="color:var(--teal)"><i class="ti ti-world"></i> Config. Playlist Global</div>
+          <div class="setting-row"><label>Limite de músicas por pessoa</label><input type="number" class="setting-input" id="globalSongLimit" value="3" min="1" max="10" /></div>
+          <div class="setting-row"><label>Rotação Justa</label><label class="toggle"><input type="checkbox" id="tog-rotation-global" checked /><span class="toggle-slider"></span></label></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;padding:8px;background:var(--teal-dim);border-radius:8px">
+            <i class="ti ti-info-circle"></i> Participantes buscam músicas da Playlist Global do sistema (12.916 músicas).
+          </div>
         </div>
 
         <div class="setting-row" style="margin-bottom:14px">
@@ -1411,9 +1429,10 @@ try {
 const PLAN_MODES  = { basic:1, pro:2, premium:3 };
 const PLAN_LABELS = { basic:'Basic', pro:'Pro', premium:'Premium' };
 const MODE_LABELS = {
-  bar:  { icon:'🍺', label:'Bar / Restaurante',      color:'var(--mode-bar)'  },
-  bday: { icon:'🎂', label:'Aniversário / Festa',     color:'var(--mode-bday)' },
-  wed:  { icon:'💍', label:'Casamento / Corporativo', color:'var(--mode-wed)'  },
+  bar:    { icon:'🍺', label:'Bar / Restaurante',      color:'var(--mode-bar)'   },
+  bday:   { icon:'🎂', label:'Aniversário / Festa',     color:'var(--mode-bday)'  },
+  wed:    { icon:'💍', label:'Casamento / Corporativo', color:'var(--mode-wed)'   },
+  global: { icon:'🌐', label:'Playlist Global',         color:'var(--teal)'       },
 };
 const COLORS     = ['#ff3c6e','#ffb800','#00e5c4','#a78bfa','#fb923c','#34d399','#60a5fa','#f472b6','#e879f9','#38bdf8'];
 const DEMO_CODES = ['042','117','203','089','156','301','077','198','015'];
@@ -1673,19 +1692,35 @@ function setupClientPanel() {
   renderPlanFeatures(c);
 }
 function getUnlockedModes(c) {
-  const all=['bar','bday','wed'], slots=PLAN_MODES[c.plan_id]||1, res=[c.event_type];
-  let added=1;
-  for (const m of all) { if(m!==c.event_type && added<slots){res.push(m);added++;} }
-  return res;
+  const all   = ['bar','bday','wed','global'];
+  const slots = PLAN_MODES[c.plan_id] || 1;
+  const result = [c.event_type];
+  let added = 1;
+  for (const m of all) {
+    if (m !== c.event_type && added < slots) { result.push(m); added++; }
+  }
+  // Premium unlocks all including global
+  if (c.plan_id === 'premium') return all;
+  return result;
 }
-function setupModeSelector(client, unlocked) {
-  ['bar','bday','wed'].forEach(m=>{
-    const btn=document.getElementById('modeBtn-'+m); if(!btn)return;
-    btn.querySelectorAll('.lock-overlay').forEach(el=>el.remove());
-    if(unlocked.includes(m)){btn.classList.remove('locked');}
-    else{btn.classList.add('locked');const el=document.createElement('span');el.className='lock-overlay';el.innerHTML='<i class="ti ti-lock"></i>';btn.appendChild(el);}
+
+function setupModeSelector(client, unlockedModes) {
+  ['bar','bday','wed','global'].forEach(m => {
+    const btn = document.getElementById('modeBtn-' + m);
+    if (!btn) return;
+    btn.querySelectorAll('.lock-overlay').forEach(el => el.remove());
+    if (unlockedModes.includes(m)) {
+      btn.classList.remove('locked');
+    } else {
+      btn.classList.add('locked');
+      const lockEl = document.createElement('span');
+      lockEl.className = 'lock-overlay';
+      lockEl.innerHTML = '<i class="ti ti-lock"></i>';
+      btn.appendChild(lockEl);
+    }
   });
-  document.getElementById('modeLockedNote').style.display=['bar','bday','wed'].some(m=>!unlocked.includes(m))?'':'none';
+  document.getElementById('modeLockedNote').style.display =
+    ['bar','bday','wed','global'].some(m => !unlockedModes.includes(m)) ? '' : 'none';
 }
 function renderPlanFeatures(client) {
   const plan=client.plan_id;
@@ -1767,35 +1802,47 @@ function getDisplayQueue() {
    MODE SELECTION
 ============================================================ */
 function selectMode(m) {
-  state.mode=m;
-  ['bar','bday','wed'].forEach(x=>{
-    const btn=document.getElementById('modeBtn-'+x); if(!btn)return;
-    const locked=btn.classList.contains('locked');
-    btn.className='mode-btn'+(locked?' locked':'')+(x===m?' active-'+x:'');
-    if(locked&&!btn.querySelector('.lock-overlay')){const el=document.createElement('span');el.className='lock-overlay';el.innerHTML='<i class="ti ti-lock"></i>';btn.appendChild(el);}
-    const s=document.getElementById('settings-'+x); if(s) s.classList.toggle('show',x===m);
+  state.mode = m;
+  state.catalogMode = (m === 'global') ? 'global' : 'local';
+  ['bar','bday','wed','global'].forEach(x => {
+    const btn = document.getElementById('modeBtn-' + x); if (!btn) return;
+    const locked = btn.classList.contains('locked');
+    btn.className = 'mode-btn' + (locked ? ' locked' : '') + (x === m ? ' active-' + x : '');
+    if (locked && !btn.querySelector('.lock-overlay')) {
+      const el = document.createElement('span'); el.className = 'lock-overlay';
+      el.innerHTML = '<i class="ti ti-lock"></i>'; btn.appendChild(el);
+    }
+    const s = document.getElementById('settings-' + x);
+    if (s) s.classList.toggle('show', x === m);
   });
 }
 function getSettings() {
-  if(state.mode==='bar') return {
-    mesa:document.getElementById('tog-mesa')?.checked??true,
-    rotation:document.getElementById('tog-rotation')?.checked??true,
-    pix:document.getElementById('tog-pix')?.checked??false,
-    pixValue:parseFloat(document.getElementById('pixValue')?.value)||5,
-    songLimit:0,hidden:false,
-    duet:document.getElementById('tog-duet')?.checked??true,
+  if (state.mode === 'bar') return {
+    mesa:     document.getElementById('tog-mesa')?.checked ?? true,
+    rotation: document.getElementById('tog-rotation')?.checked ?? true,
+    pix:      document.getElementById('tog-pix')?.checked ?? false,
+    pixValue: parseFloat(document.getElementById('pixValue')?.value) || 5,
+    songLimit: 0, hidden: false,
+    duet:     document.getElementById('tog-duet')?.checked ?? true,
   };
-  if(state.mode==='bday') return {
-    mesa:false,rotation:document.getElementById('tog-rotation-bday')?.checked??true,
-    pix:false,pixValue:5,
-    songLimit:parseInt(document.getElementById('songLimit')?.value)||2,
-    hidden:false,duet:document.getElementById('tog-duet')?.checked??true,
+  if (state.mode === 'bday') return {
+    mesa: false, rotation: document.getElementById('tog-rotation-bday')?.checked ?? true,
+    pix: false, pixValue: 5,
+    songLimit: parseInt(document.getElementById('songLimit')?.value) || 2,
+    hidden: false, duet: document.getElementById('tog-duet')?.checked ?? true,
   };
+  if (state.mode === 'global') return {
+    mesa: false, rotation: document.getElementById('tog-rotation-global')?.checked ?? true,
+    pix: false, pixValue: 0,
+    songLimit: parseInt(document.getElementById('globalSongLimit')?.value) || 3,
+    hidden: false, duet: document.getElementById('tog-duet')?.checked ?? true,
+  };
+  // wed
   return {
-    mesa:false,rotation:false,pix:false,pixValue:0,
-    songLimit:parseInt(document.getElementById('wedSongLimit')?.value)||1,
-    hidden:document.getElementById('tog-hidden')?.checked??true,
-    duet:document.getElementById('tog-duet')?.checked??true,
+    mesa: false, rotation: false, pix: false, pixValue: 0,
+    songLimit: parseInt(document.getElementById('wedSongLimit')?.value) || 1,
+    hidden: document.getElementById('tog-hidden')?.checked ?? true,
+    duet: document.getElementById('tog-duet')?.checked ?? true,
   };
 }
 
