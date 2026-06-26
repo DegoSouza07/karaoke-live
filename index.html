@@ -1933,21 +1933,29 @@ function subscribeToQueue(partyId) {
 }
 
 async function loadQueueFromDB(partyId) {
-  const pid=partyId||state.partyId; if(!pid)return;
+  const pid = partyId || state.partyId; if (!pid) return;
   const {data} = await db.from('queue_entries').select('*')
-    .eq('party_id',pid).in('status',['waiting','singing']).order('position',{ascending:true});
-  state.queue=(data||[]).map((e,i)=>({
-    id:e.id, dbId:e.id, name:e.participant, song:e.music_code,
-    titulo:  e.music_title  || null,   // título real (modo global)
-    artista: e.music_artist || null,   // artista real (modo global)
+    .eq('party_id', pid).in('status',['waiting','singing']).order('position',{ascending:true});
+
+  state.queue = (data || []).map((e,i) => ({
+    id:      e.id,
+    dbId:    e.id,
+    name:    e.participant,
+    song:    e.music_code,
+    titulo:  e.music_title  || null,
+    artista: e.music_artist || null,
     origem:  e.origem_musica || 'local',
-    duet:e.duet_partner||'', mesa:e.table_num||'',
-    status:e.status, addedBy:e.added_by, color:COLORS[i%COLORS.length],
+    duet:    e.duet_partner || '',
+    mesa:    e.table_num    || '',
+    status:  e.status,
+    addedBy: e.added_by,
+    color:   COLORS[i % COLORS.length],
   }));
-  const sIdx=state.queue.findIndex(e=>e.status==='singing');
-  state.currentSinging=sIdx>=0?sIdx+1:0;
-  if(state.myEntryId) state.myIndex=state.queue.findIndex(e=>e.dbId===state.myEntryId);
-  updateHostMonitor();renderQueue();
+
+  const sIdx = state.queue.findIndex(e => e.status === 'singing');
+  state.currentSinging = sIdx >= 0 ? sIdx + 1 : 0;
+  if (state.myEntryId) state.myIndex = state.queue.findIndex(e => e.dbId === state.myEntryId);
+  updateHostMonitor(); renderQueue();
 }
 
 /* ============================================================
@@ -2094,8 +2102,11 @@ function updateHostMonitor() {
       <div class="qitem-info">
         <div class="qitem-name">${p.name}${p.duet?' & '+p.duet:''}${djBadge}</div>
         <div class="qitem-song">
-          <span style="font-family:var(--font-t);font-size:16px;letter-spacing:2px;color:${singing?'var(--teal)':'var(--gold)'}">#${p.song}</span>
-          ${p.titulo ? `<span style="font-size:11px;color:var(--subtle);margin-left:6px">${p.titulo}</span>` : ''}
+          ${p.titulo
+            ? `<span style="font-size:12px;font-weight:600;color:var(--text)">${p.titulo}</span>
+               <span style="font-size:10px;color:var(--muted);display:block">${p.artista || ''} · #${p.song}</span>`
+            : `<span style="font-family:var(--font-t);font-size:16px;letter-spacing:2px;color:${singing?'var(--teal)':'var(--gold)'}">#${p.song}</span>`
+          }
           ${mesa}
         </div>
       </div>${tag}
